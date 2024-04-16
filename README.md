@@ -54,18 +54,6 @@ Using jsDelivr CDN:
 
 <!-- module -->
 <script type="module">
-  import { Buffer } from 'https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.global.js'
-</script>
-
-<!-- importmap + module -->
-<script type="importmap">
-  {
-    "imports": {
-      "lodash": "https://cdn.jsdelivr.net/npm/lodash@4/lodash.min.js"
-    }
-  }
-</script>
-<script type="module">
-  import { Buffer } from 'https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs'
+  import { Buffer } from 'https://esm.run/@taichunmin/buffer@0/dist/buffer.mjs'
 </script>
 ```
