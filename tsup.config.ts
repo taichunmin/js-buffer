@@ -7,5 +7,5 @@ export default defineConfig({
   format: ['cjs', 'esm', 'iife'],
   minify: true,
   sourcemap: true,
-  splitting: false
+  splitting: false,
 })

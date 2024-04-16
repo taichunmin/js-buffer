@@ -1,13 +1,28 @@
 {
-  "author": "taichunmin <taichunmin@gmail.com>",
+  "browser": "dist/buffer.global.js",
+  "description": "A cross platform alternative of Node buffer base on UInt8Array.",
+  "homepage": "https://github.com/taichunmin/js-buffer",
+  "jsdelivr": "dist/buffer.global.js",
   "license": "MIT",
   "main": "index.js",
   "name": "@taichunmin/buffer",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/taichunmin/js-buffer.git"
+  "unpkg": "dist/buffer.global.js",
+  "version": "0.2.0",
+  "author": {
+    "email": "taichunmin@gmail.com",
+    "name": "Chunmin Tai",
+    "url": "https://taichunmin.idv.tw"
   },
-  "version": "0.1.0",
+  "bugs": {
+    "url": "https://github.com/taichunmin/js-buffer/issues"
+  },
+  "contributors": [
+    {
+      "email": "taichunmin@gmail.com",
+      "name": "Chunmin Tai",
+      "url": "https://taichunmin.idv.tw"
+    }
+  ],
   "dependencies": {
     "lodash": "^4.17.21",
     "utility-types": "^3.11.0"
@@ -27,12 +42,39 @@
     "tsup": "^8.0.2",
     "typescript": "^5.4.5"
   },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "browser": "./dist/buffer.global.js",
+      "import": {
+        "default": "./dist/buffer.mjs",
+        "types": "./dist/buffer.d.mts"
+      },
+      "require": {
+        "default": "./dist/buffer.js",
+        "types": "./dist/buffer.d.ts"
+      }
+    }
+  },
+  "keywords": [
+    "arraybuffer",
+    "browser",
+    "browserify",
+    "buffer",
+    "compatible",
+    "dataview",
+    "uint8array"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/taichunmin/js-buffer.git"
+  },
   "scripts": {
     "build": "tsup",
-    "lint:ci": "eslint --ext ts --fix ./lib",
     "lint": "yarn lint:ci --fix",
+    "lint:ci": "eslint --ext ts --fix ./lib",
     "publish:test": "npm publish --access public --dry-run",
-    "test:ci": "jest --roots ./lib --ci --coverage",
-    "test": "jest --roots ./lib --"
+    "test": "jest --roots ./lib --",
+    "test:ci": "jest --roots ./lib --ci --coverage"
   }
 }
