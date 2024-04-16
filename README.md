@@ -19,6 +19,8 @@
 
 ## Getting Started
 
+### Package manager
+
 Use npm or yarn to install the package.
 
 ```bash
@@ -29,18 +31,33 @@ npm install @taichunmin/buffer
 yarn add @taichunmin/buffer
 ```
 
-Use jsdelivr CDN to include the package.
+Once the package is installed, you can import the library using import or require:
+
+```js
+// import
+import { Buffer } from '@taichunmin/buffer'
+
+// require
+const { Buffer } = require('@taichunmin/buffer')
+```
+
+### CDN
+
+Using jsDelivr CDN:
 
 ```html
 <!-- script -->
 <script src="https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.global.js"></script>
+<script>
+  const { Buffer } = window?.taichunmin?.buffer
+</script>
 
 <!-- module -->
 <script type="module">
   import { Buffer } from 'https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.global.js'
 </script>
 
-<!-- module + importmap -->
+<!-- importmap + module -->
 <script type="importmap">
   {
     "imports": {

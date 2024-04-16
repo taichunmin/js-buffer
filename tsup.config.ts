@@ -5,7 +5,7 @@ export default defineConfig((options) => ({
   dts: true,
   entry: ['lib/buffer.ts'],
   format: ['cjs', 'esm', 'iife'],
-  globalName: 'Buffer',
+  globalName: 'taichunmin.buffer',
   keepNames: true,
   minify: !options.watch,
   sourcemap: true,

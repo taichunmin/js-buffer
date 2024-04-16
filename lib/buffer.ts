@@ -76,7 +76,7 @@ export interface EnumLike {
   [nu: number]: string
 }
 
-export function createIsEnum <T extends EnumLike> (e: T): (val: any) => val is T[keyof T] {
+function createIsEnum <T extends EnumLike> (e: T): (val: any) => val is T[keyof T] {
   const ev = new Set(_.chain(e).toPairs().filter(([k, v]) => !_.isNumber(e[v])).map(1).value())
   return (val: any): val is T[keyof T] => ev.has(val)
 }
