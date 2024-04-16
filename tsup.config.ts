@@ -1,11 +1,13 @@
 import { defineConfig } from 'tsup'
 
-export default defineConfig({
+export default defineConfig((options) => ({
   clean: true,
-  entry: ['lib/buffer.ts'],
   dts: true,
+  entry: ['lib/buffer.ts'],
   format: ['cjs', 'esm', 'iife'],
-  minify: true,
+  globalName: 'Buffer',
+  keepNames: true,
+  minify: !options.watch,
   sourcemap: true,
   splitting: false,
-})
+}))
