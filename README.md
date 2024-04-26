@@ -54,6 +54,6 @@ Using jsDelivr CDN:
 
 <!-- module -->
 <script type="module">
-  import { Buffer } from 'https://esm.run/@taichunmin/buffer@0/dist/buffer.mjs'
+  import { Buffer } from 'https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm'
 </script>
 ```
