@@ -130,8 +130,12 @@ out
 
 # extra ignore file for npm
 .github
+*.html
+*.nojekyll
 *.test.ts
 /.eslintrc.*
 /*.config.js
+/dist/assets
 /tsconfig.json
 /tsup.config.ts
+/typedoc.json

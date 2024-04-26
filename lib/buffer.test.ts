@@ -66,9 +66,27 @@ test('Buffer.allocUnsafe()', () => {
   expect(actual.length).toEqual(10)
 })
 
+test('Buffer.allocUnsafe() should throw error with invalid size', () => {
+  expect.hasAssertions()
+  try {
+    Buffer.allocUnsafe(1.2)
+  } catch (err) {
+    expect(err.message).toMatch(/Invalid size/)
+  }
+})
+
 test('Buffer.allocUnsafeSlow()', () => {
   const actual = Buffer.allocUnsafeSlow(10)
   expect(actual.length).toEqual(10)
+})
+
+test('Buffer.allocUnsafeSlow() should throw error with invalid size', () => {
+  expect.hasAssertions()
+  try {
+    Buffer.allocUnsafeSlow(1.2)
+  } catch (err) {
+    expect(err.message).toMatch(/Invalid size/)
+  }
 })
 
 describe('Buffer.from()', () => {
@@ -80,6 +98,11 @@ describe('Buffer.from()', () => {
   test('should be truncated using `(value & 255)` to fit into the range 0-255', () => {
     const actual = Buffer.from([257, 257.5, -255, '1'] as any)
     expect(actual.toString('hex')).toEqual('01010101')
+  })
+
+  test('should treat Uint16Array as an array', () => {
+    const actual = Buffer.from(new Uint16Array([0xff01, 0xff02, 0xff03]))
+    expect(actual.toString('hex')).toEqual('010203')
   })
 
   test('should creates a Buffer containing the UTF-8 encoded bytes', () => {
@@ -142,6 +165,13 @@ describe('Buffer.from()', () => {
     expect(actual.toString('hex')).toEqual('7468697320697320612074657374')
   })
 
+  test('should creates a Buffer from return value to Buffer#toJSON()', () => {
+    const buf1 = Buffer.from('01020304', 'hex')
+    const json1 = buf1.toJSON()
+    const buf2 = Buffer.from(json1)
+    expect(buf2.toString('hex')).toEqual('01020304')
+  })
+
   test('should throw a Error', () => {
     expect.hasAssertions()
     try {
@@ -198,9 +228,13 @@ test.each([
 
 describe('Buffer.fromView()', () => {
   test('with TypedArray', () => {
-    const view = new Uint8Array([0, 1, 2, 3, 4]).subarray(1, 4)
-    const actual = Buffer.fromView(view).toString('hex')
-    expect(actual).toEqual('010203')
+    const view1 = new Uint8Array([0, 1, 2, 3, 4]).subarray(1, 4)
+    const actual1 = Buffer.fromView(view1)
+    expect(actual1.toString('hex')).toEqual('010203')
+
+    const view2 = new Uint16Array([0x1212, 0x3434, 0x5656])
+    const actual2 = Buffer.fromView(view2, 1, 1)
+    expect(actual2.toString('hex')).toEqual('3434')
   })
 
   test('with DataView', () => {
@@ -323,9 +357,15 @@ describe('Buffer#fill()', () => {
 
     actual.fill('aazz', 'hex')
     expect(actual.toString('hex')).toEqual('aaaaaaaaaa')
+  })
 
-    actual.fill('zz', 'hex')
-    expect(actual.toString('hex')).toEqual('0000000000')
+  test('should throw error if no valid fill data after truncated', () => {
+    expect.hasAssertions()
+    try {
+      Buffer.allocUnsafe(5).fill('zz', 'hex')
+    } catch (err) {
+      expect(err.message).toMatch(/encode string/)
+    }
   })
 
   test('should work with val, offset, encoding', () => {
@@ -366,7 +406,7 @@ describe('Buffer#includes()', () => {
     { inputName: 'Buffer()', input: new Buffer(), expected: false },
   ])('Buffer#includes($inputName) = $expected', ({ input, expected }) => {
     const buf = Buffer.from('this is a buffer')
-    const actual = buf.includes(input)
+    const actual = buf.includes(input as any)
     expect(actual).toBe(expected)
   })
 
@@ -402,7 +442,7 @@ describe('Buffer#indexOf()', () => {
     { inputName: 'Buffer()', input: new Buffer(), expected: -1 },
   ])('Buffer#indexOf($inputName) = $expected', ({ input, expected }) => {
     const buf = Buffer.from('this is a buffer')
-    const actual = buf.indexOf(input)
+    const actual = buf.indexOf(input as any)
     expect(actual).toBe(expected)
   })
 
@@ -455,7 +495,7 @@ describe('Buffer#lastIndexOf()', () => {
     { inputName: 'Buffer()', input: new Buffer(), expected: -1 },
   ])('Buffer#lastIndexOf($inputName) = $expected', ({ input, expected }) => {
     const buf = Buffer.from('this buffer is a buffer')
-    const actual = buf.lastIndexOf(input)
+    const actual = buf.lastIndexOf(input as any)
     expect(actual).toBe(expected)
   })
 
@@ -470,7 +510,7 @@ describe('Buffer#lastIndexOf()', () => {
 
   test.each([
     { inputName: 'undefined', input: undefined, expected: 1 },
-    { inputName: '{}', input: {}, expected: -1 },
+    { inputName: '{}', input: {}, expected: 1 },
     { inputName: 'null', input: null, expected: -1 },
     { inputName: '[]', input: [], expected: -1 },
   ])('Buffer#lastIndexOf("b", $inputName) = $expected', ({ input, expected }) => {
@@ -487,7 +527,7 @@ describe('Buffer#lastIndexOf()', () => {
 
   test('should work with encoding argument', () => {
     const buf = Buffer.from('\u039a\u0391\u03a3\u03a3\u0395', 'utf16le')
-    expect(buf.lastIndexOf('\u03a3', undefined, 'utf16le')).toBe(6)
+    expect(buf.lastIndexOf('\u03a3', undefined as any, 'utf16le')).toBe(6)
     expect(buf.lastIndexOf('\u03a3', -5, 'utf16le')).toBe(4)
   })
 
@@ -550,15 +590,6 @@ describe('Buffer.from()', () => {
   })
 })
 
-test('Buffer.fromArray() should throw error with invalid argument', () => {
-  expect.hasAssertions()
-  try {
-    Buffer.fromArray(1 as any)
-  } catch (err) {
-    expect(err.message).toMatch(/arr must be an array/)
-  }
-})
-
 describe('Buffer.concat()', () => {
   test('return the same Buffer with 1 buffer', () => {
     const actual = Buffer.concat([Buffer.from([0, 1])]).toString('hex')
@@ -587,8 +618,14 @@ describe('Buffer.concat()', () => {
 })
 
 describe('Buffer#equals()', () => {
+  test('return true', () => {
+    const buf1 = Buffer.from([0, 1])
+    const buf2 = Buffer.from([0, 1])
+    expect(Buffer.equals(buf1, buf2)).toEqual(true)
+  })
+
   test('return false with invalid type', () => {
-    const actual = Buffer.from([0, 1]).equals('')
+    const actual = Buffer.from([0, 1]).equals('' as any)
     expect(actual).toEqual(false)
   })
 
@@ -832,6 +869,12 @@ describe('Buffer.compare()', () => {
     const buf2 = Buffer.from(str2)
     expect(Buffer.compare(buf1, buf2)).toEqual(expected)
     expect(buf1.compare(buf2)).toEqual(expected)
+  })
+
+  test('should compare with Uint8Array', () => {
+    const buf1 = new Uint8Array([0, 1, 2])
+    const buf2 = new Uint8Array([0, 1, 2])
+    expect(Buffer.compare(buf1, buf2)).toEqual(0)
   })
 
   test('should throw error with invalid type', () => {
@@ -1579,6 +1622,44 @@ describe('Buffer.unpack()', () => {
     // https://github.com/ryanrolds/bufferpack/blob/master/test/cstring.test.js
     const actual = Buffer.unpack(Buffer.from(hex, 'hex'), format)
     expect(actual).toEqual(vals)
+  })
+
+  test('should throw error with unknown format', () => {
+    expect.hasAssertions()
+    try {
+      jest.spyOn(Buffer, 'packParseFormat').mockReturnValueOnce({ littleEndian: false, items: [[1, 'z']] })
+      Buffer.unpack(Buffer.from('00', 'hex'), 'z')
+    } catch (err) {
+      expect(err.message).toMatch(/Unknown format/)
+    }
+  })
+})
+
+describe('Buffer.iterUnpack()', () => {
+  test('should unpack all tuples', () => {
+    const buf1 = Buffer.from('01fe01fe', 'hex')
+    const actual = [...buf1.iterUnpack('!BB')]
+    expect(actual).toEqual([[1, 254], [1, 254]])
+  })
+
+  test('should throw error with invalid type of buf', () => {
+    expect.hasAssertions()
+    try {
+      const u8arr = new Uint8Array([0, 1, 2, 3])
+      console.log([...Buffer.iterUnpack(u8arr as any, '!BB')])
+    } catch (err) {
+      expect(err.message).toMatch(/type of buf/)
+    }
+  })
+
+  test('should throw error with contents too small', () => {
+    expect.hasAssertions()
+    try {
+      const buf = new Buffer([0])
+      console.log([...Buffer.iterUnpack(buf as any, '!BB')])
+    } catch (err) {
+      expect(err.message).toMatch(/lenRequired/)
+    }
   })
 })
 

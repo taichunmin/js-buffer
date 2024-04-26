@@ -4,6 +4,11 @@
 
 <p>A cross platform alternative of Node buffer base on UInt8Array.</p>
 
+<p>
+<a href="https://taichunmin.idv.tw/js-buffer/"><b>Documentation</b></a> •
+<a href="https://taichunmin.idv.tw/js-buffer/classes/Buffer.html"><b>Reference</b></a>
+</p>
+
 [![npm version](https://img.shields.io/npm/v/@taichunmin/buffer.svg?logo=npm)](https://www.npmjs.org/package/@taichunmin/buffer)
 [![jsdelivr hits](https://img.shields.io/jsdelivr/npm/hm/@taichunmin/buffer?logo=jsdelivr)](https://www.jsdelivr.com/package/npm/@taichunmin/buffer)
 [![Build status](https://img.shields.io/github/actions/workflow/status/taichunmin/js-buffer/ci.yml?branch=master)](https://github.com/taichunmin/js-buffer/actions/workflows/ci.yml)
@@ -55,5 +60,10 @@ Using jsDelivr CDN:
 <!-- module -->
 <script type="module">
   import { Buffer } from 'https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm'
+</script>
+
+<!-- module + async import -->
+<script type="module">
+  const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
 </script>
 ```

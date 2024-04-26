@@ -7,7 +7,7 @@
   "main": "index.js",
   "name": "@taichunmin/buffer",
   "unpkg": "dist/buffer.global.js",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "author": {
     "email": "taichunmin@gmail.com",
     "name": "Chunmin Tai",
@@ -24,8 +24,7 @@
     }
   ],
   "dependencies": {
-    "lodash": "^4.17.21",
-    "utility-types": "^3.11.0"
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
@@ -37,9 +36,15 @@
     "eslint-plugin-import": "^2.25.2",
     "eslint-plugin-n": "^15.0.0",
     "eslint-plugin-promise": "^6.0.0",
+    "eslint-plugin-tsdoc": "^0.2.17",
     "jest": "^29.7.0",
+    "nodemon": "^3.1.0",
     "ts-jest": "^29.1.2",
     "tsup": "^8.0.2",
+    "typedoc": "^0.25.13",
+    "typedoc-plugin-mdn-links": "^3.1.23",
+    "typedoc-plugin-missing-exports": "^2.2.0",
+    "typedoc-plugin-rename-defaults": "^0.7.0",
     "typescript": "^5.4.5"
   },
   "exports": {
@@ -67,14 +72,17 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/taichunmin/js-buffer.git"
+    "url": "git+https://github.com/taichunmin/js-buffer.git"
   },
   "scripts": {
-    "build": "tsup",
-    "lint": "yarn lint:ci --fix",
+    "build:docs": "typedoc --out dist lib/buffer.ts",
+    "build:js": "tsup",
+    "build": "yarn build:js && yarn build:docs",
+    "dev:docs": "nodemon --watch lib --ext ts --exec \"yarn build:docs\"",
     "lint:ci": "eslint --ext ts --fix ./lib",
+    "lint": "yarn lint:ci --fix",
     "publish:test": "npm publish --access public --dry-run",
-    "test": "jest --roots ./lib --",
-    "test:ci": "jest --roots ./lib --ci --coverage"
+    "test:ci": "jest --roots ./lib --ci --coverage",
+    "test": "jest --roots ./lib --"
   }
 }
