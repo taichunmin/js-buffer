@@ -137,5 +137,7 @@ out
 /*.config.js
 /dist/assets
 /tsconfig.json
+/tsdoc.json
 /tsup.config.ts
+/typedoc
 /typedoc.json

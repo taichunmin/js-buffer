@@ -319,7 +319,7 @@ export class Buffer extends Uint8Array {
   /**
    * Returns the byte length of a string when encoded using `encoding`. This is not the same as `String.prototype.length`, which does not account for the `encoding` that is used to convert the string into bytes.
    *
-   * For `'base64'`, `'base64url'`, and `'hex'`, this function assumes `value` is valid. For strings that contain non-base64/hex-encoded data (e.g. whitespace), the return value might be greater than the length of a `Buffer` created from the string.
+   * For `'base64'`, `'base64url'`, and `'hex'`, this method assumes `value` is valid. For strings that contain non-base64/hex-encoded data (e.g. whitespace), the return value might be greater than the length of a `Buffer` created from the string.
    * @param string - A value to calculate the length of bytes.
    * @param encoding - The encoding of `string`. Default: `'utf8'`.
    * @returns The number of bytes contained within `string`.
@@ -731,6 +731,7 @@ export class Buffer extends Uint8Array {
   /**
    * Creates a new `Buffer` that encoded from the provided `utf8` using UTF-8 encoding. Multi-byte encoded Unicode characters. Many web pages and other document formats use [UTF-8](https://en.wikipedia.org/wiki/UTF-8). This is the default character encoding.
    * @param utf8 - A string to encode.
+   * @see This method based on the [TextEncoder](https://developer.mozilla.org/en-US/docs/Web/API/TextEncoder/encode) API.
    * @group Static Methods
    */
   static fromUtf8String (utf8: string): Buffer {
@@ -795,8 +796,9 @@ export class Buffer extends Uint8Array {
   }
 
   /**
-   * Parse a format string `format`. This is a internal function used by `Buffer.packCalcSize()`, `Buffer.pack()` and `Buffer.unpack()`.
+   * Parse a format string `format`. This is a internal method used by `Buffer.packCalcSize()`, `Buffer.pack()` and `Buffer.unpack()`.
    * @param format - A format string.
+   * @remarks Unlike Python struct, this method does not support native size and alignment (that wouldn't make much sense in a javascript). Instead, specify byte order and emit pad bytes explicitly.
    * @group Static Methods
    */
   static packParseFormat (format: string): PackFormat {
@@ -817,6 +819,7 @@ export class Buffer extends Uint8Array {
   /**
    * Return the required size corresponding to the format string `formatOrItems`.
    * @param formatOrItems - A format string or parsed items return by `Buffer.packParseFormat().items`.
+   * @remarks Unlike Python struct, this method does not support native size and alignment (that wouldn't make much sense in a javascript). Instead, specify byte order and emit pad bytes explicitly.
    * @group Static Methods
    * @example
    * ```js
@@ -850,6 +853,7 @@ export class Buffer extends Uint8Array {
    * @param format - A format string.
    * @param vals - Values to pack.
    * @group Static Methods
+   * @remarks Unlike Python struct, this method does not support native size and alignment (that wouldn't make much sense in a javascript). Instead, specify byte order and emit pad bytes explicitly.
    * @see Please refer to [Python struct — Interpret bytes as packed binary data](https://docs.python.org/3/library/struct.html) for more information.
    * @example
    * ```js
@@ -869,6 +873,7 @@ export class Buffer extends Uint8Array {
    * @param buf - A `Buffer` to pack into.
    * @param format - A format string.
    * @param vals - Values to pack.
+   * @remarks Unlike Python struct, this method does not support native size and alignment (that wouldn't make much sense in a javascript). Instead, specify byte order and emit pad bytes explicitly.
    * @group Static Methods
    * @example
    * ```js
@@ -913,6 +918,7 @@ export class Buffer extends Uint8Array {
    * Unpack from the `buf` (presumably packed by `pack(format, ...))` according to the format string `format`. The result is a tuple even if it contains exactly one item. The `buf`’s size in bytes must larger then the size required by the `format`, as reflected by `Buffer.packCalcSize()`.
    * @param buf - A `Buffer` to unpack from.
    * @param format - A format string.
+   * @remarks Unlike Python struct, this method does not support native size and alignment (that wouldn't make much sense in a javascript). Instead, specify byte order and emit pad bytes explicitly.
    * @group Static Methods
    * @example
    * ```js
@@ -941,9 +947,10 @@ export class Buffer extends Uint8Array {
   }
 
   /**
-   * Iteratively unpack from the `buf` according to the format string `format`. This function returns an iterator which will read equally sized chunks from the `buf` until remaining contents smaller then the size required by the `format`, as reflected by `Buffer.packCalcSize()`.
+   * Iteratively unpack from the `buf` according to the format string `format`. This method returns an iterator which will read equally sized chunks from the `buf` until remaining contents smaller then the size required by the `format`, as reflected by `Buffer.packCalcSize()`.
    * @param buf - A `Buffer` to unpack from.
    * @param format - A format string.
+   * @remarks Unlike Python struct, this method does not support native size and alignment (that wouldn't make much sense in a javascript). Instead, specify byte order and emit pad bytes explicitly.
    * @group Static Methods
    * @example
    * ```js
@@ -1862,23 +1869,91 @@ export class Buffer extends Uint8Array {
     return tmp
   }
 
+  /**
+   * Reads a 16-bit, big-endian float from `buf` at the specified `offset`.
+   * @param offset - Number of bytes to skip before starting to read. Must satisfy `0 <= offset <= buf.length - 2`. Default: `0`.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *
+   *   console.log(Buffer.from('0000', 'hex').readFloat16BE(0)) // Prints: 0
+   *   console.log(Buffer.from('8000', 'hex').readFloat16BE(0)) // Prints: -0
+   *   console.log(Buffer.from('3c00', 'hex').readFloat16BE(0)) // Prints: 1
+   *   console.log(Buffer.from('bc00', 'hex').readFloat16BE(0)) // Prints: -1
+   *   console.log(Buffer.from('7c00', 'hex').readFloat16BE(0)) // Prints: Infinity
+   *   console.log(Buffer.from('fc00', 'hex').readFloat16BE(0)) // Prints: -Infinity
+   *   console.log(Buffer.from('7e00', 'hex').readFloat16BE(0)) // Prints: NaN
+   *   console.log(Buffer.from('fe00', 'hex').readFloat16BE(0)) // Prints: NaN
+   * })()
+   * ```
+   */
   readFloat16BE (offset: number = 0): number {
     const u32 = floatU16ToU32(this.readUInt16BE(offset))
     float16Buf.setUint32(0, u32)
     return float16Buf.getFloat32(0)
   }
 
+  /**
+   * Reads a 16-bit, little-endian float from `buf` at the specified `offset`.
+   * @param offset - Number of bytes to skip before starting to read. Must satisfy `0 <= offset <= buf.length - 2`. Default: `0`.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *
+   *   console.log(Buffer.from('0000', 'hex').readFloat16LE(0)) // Prints: 0
+   *   console.log(Buffer.from('0080', 'hex').readFloat16LE(0)) // Prints: -0
+   *   console.log(Buffer.from('003c', 'hex').readFloat16LE(0)) // Prints: 1
+   *   console.log(Buffer.from('00bc', 'hex').readFloat16LE(0)) // Prints: -1
+   *   console.log(Buffer.from('007c', 'hex').readFloat16LE(0)) // Prints: Infinity
+   *   console.log(Buffer.from('00fc', 'hex').readFloat16LE(0)) // Prints: -Infinity
+   *   console.log(Buffer.from('007e', 'hex').readFloat16LE(0)) // Prints: NaN
+   *   console.log(Buffer.from('00fe', 'hex').readFloat16LE(0)) // Prints: NaN
+   * })()
+   * ```
+   */
   readFloat16LE (offset: number = 0): number {
     const u32 = floatU16ToU32(this.readUInt16LE(offset))
     float16Buf.setUint32(0, u32)
     return float16Buf.getFloat32(0)
   }
 
+  /**
+   * Treat `buf` as a [most-significant bit](https://en.wikipedia.org/wiki/Most_significant_bit) array and read a bit at the specified bit offset.
+   * @param bitOffset - bit offset to read from.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *
+   *   const buf = Buffer.from([0b10010110])
+   *   const bits = new Array(8)
+   *   for (let i = 0; i < 8; i++) bits[i] = buf.readBitMSB(i)
+   *   console.log(bits) // Prints: [1, 0, 0, 1, 0, 1, 1, 0]
+   * })()
+   * ```
+   */
   readBitMSB (bitOffset: number): number {
     const tmp = [bitOffset >>> 3, (bitOffset & 7) ^ 7]
     return (this[tmp[0]] >>> tmp[1]) & 1
   }
 
+  /**
+   * Treat the buffer as a [least significant bit](https://en.wikipedia.org/wiki/Least_significant_bit) array and read a bit at the specified bit offset.
+   * @param bitOffset - bit offset to read from.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *
+   *   const buf = Buffer.from([0b10010110])
+   *   const bits = new Array(8)
+   *   for (let i = 0; i < 8; i++) bits[i] = buf.readBitLSB(i)
+   *   console.log(bits) // Prints: [0, 1, 1, 0, 1, 0, 0, 1]
+   * })()
+   * ```
+   */
   readBitLSB (bitOffset: number): number {
     const tmp = [this.length - (bitOffset >>> 3) - 1, bitOffset & 7]
     return (this[tmp[0]] >>> tmp[1]) & 1
@@ -2022,7 +2097,7 @@ export class Buffer extends Uint8Array {
   }
 
   /**
-   * `JSON.stringify()` implicitly calls this function when stringifying a `Buffer` instance. `Buffer.from()` accepts objects in the format returned from this method. In particular, `Buffer.from(buf.toJSON())` works like `Buffer.from(buf)`.
+   * `JSON.stringify()` implicitly calls this method when stringifying a `Buffer` instance. `Buffer.from()` accepts objects in the format returned from this method. In particular, `Buffer.from(buf.toJSON())` works like `Buffer.from(buf)`.
    * @returns a JSON representation of `buf`.
    * @example
    * ```js
@@ -2046,8 +2121,6 @@ export class Buffer extends Uint8Array {
 
   /**
    * Decodes `buf` to a string according to the specified character encoding in `encoding`. `start` and `end` may be passed to decode only a subset of `buf`.
-   *
-   * If `encoding` is `'utf8'` and a byte sequence in the input is not valid UTF-8, then each invalid byte is replaced with the replacement character `U+FFFD`.
    * @param encoding - The character encoding to use. Default: `'utf8'`.
    * @param start - The byte offset to start decoding at. Default: `0`.
    * @param end - The byte offset to stop decoding at (not inclusive). Default: `buf.length`.
@@ -2076,12 +2149,12 @@ export class Buffer extends Uint8Array {
       'ucs-2': Buffer.toUcs2String,
       'utf-16le': Buffer.toUcs2String,
       'utf-8': Buffer.toUtf8String,
-      ascii: Buffer.toAsciiString,
+      ascii: Buffer.toLatin1String,
       base64: Buffer.toBase64String,
       base64url: Buffer.toBase64urlString,
-      binary: Buffer.toAsciiString,
+      binary: Buffer.toLatin1String,
       hex: Buffer.toHexString,
-      latin1: Buffer.toAsciiString,
+      latin1: Buffer.toLatin1String,
       ucs2: Buffer.toUcs2String,
       utf16le: Buffer.toUcs2String,
       utf8: Buffer.toUtf8String,
@@ -2109,22 +2182,43 @@ export class Buffer extends Uint8Array {
     return buf
   }
 
+  /**
+   * Decodes `buf` to a string according to the UCS-2 character encoding.
+   * @param buf - The buffer to decode.
+   * @group Static Methods
+   */
   static toUcs2String (buf: Buffer): string {
     const arr = []
     for (let i = 0; i < buf.length; i += 2) arr.push(String.fromCharCode(buf.readUInt16LE(i)))
     return arr.join('')
   }
 
+  /**
+   * Decodes `buf` to a string according to the UTF-8 character encoding.
+   * @param buf - The buffer to decode.
+   * @see This method based on the [TextDecoder](https://developer.mozilla.org/en-US/docs/Web/API/TextDecoder/decode) API.
+   * @group Static Methods
+   */
   static toUtf8String (buf: Buffer): string {
     return new TextDecoder().decode(buf)
   }
 
-  static toAsciiString (buf: Buffer): string {
+  /**
+   * Decodes `buf` to a string according to the Latin1 character encoding. When decoding a `Buffer` into a string, using this encoding will additionally unset the highest bit of each byte before decoding as `'latin1'`. Generally, there should be no reason to use this encoding, as 'utf8' (or, if the data is known to always be ASCII-only, `'latin1'`) will be a better choice when encoding or decoding ASCII-only text. It is only provided for legacy compatibility.
+   * @param buf - The buffer to decode.
+   * @group Static Methods
+   */
+  static toLatin1String (buf: Buffer): string {
     const arr = []
     for (let i = 0; i < buf.length; i++) arr.push(String.fromCharCode(buf[i]))
     return arr.join('')
   }
 
+  /**
+   * Decodes `buf` to a string according to the Base64 character encoding.
+   * @param buf - The buffer to decode.
+   * @group Static Methods
+   */
   static toBase64String (buf: Buffer): string {
     const arr = []
     for (let i = 0; i < buf.length; i += 3) {
@@ -2143,6 +2237,11 @@ export class Buffer extends Uint8Array {
     return arr.join('')
   }
 
+  /**
+   * Decodes `buf` to a string according to the Base64 URL character encoding.
+   * @param buf - The buffer to decode.
+   * @group Static Methods
+   */
   static toBase64urlString (buf: Buffer): string {
     const arr = []
     for (let i = 0; i < buf.length; i += 3) {
@@ -2160,6 +2259,11 @@ export class Buffer extends Uint8Array {
     return (tmp !== 0 ? arr.slice(0, tmp) : arr).join('')
   }
 
+  /**
+   * Decodes `buf` to a string according to the hexadecimal character encoding.
+   * @param buf - The buffer to decode.
+   * @group Static Methods
+   */
   static toHexString (buf: Buffer): string {
     const arr = []
     for (let i = 0; i < buf.length; i++) arr.push(HEX_CHAR.get(buf[i] >>> 4), HEX_CHAR.get(buf[i] & 0xF))
@@ -2378,12 +2482,42 @@ export class Buffer extends Uint8Array {
     return this
   }
 
+  /**
+   * Writes a 16-bit float `value` to `buf` at the specified `offset` as big-endian. The `value` must be a JavaScript number. Behavior is undefined when `value` is anything other than a JavaScript number.
+   * @param val - Number to be written to `buf`.
+   * @param offset - Number of bytes to skip before starting to write. Must satisfy: `0 <= offset <= buf.length - 2`. Default: `0`.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *
+   *   const buf = new Buffer(2)
+   *   buf.writeFloat16BE(123.456, 0)
+   *   console.log(buf.toString('hex')) // Prints: 57b7
+   * })()
+   * ```
+   */
   writeFloat16BE (val: number, offset: number = 0): this {
     float16Buf.setFloat32(0, val)
     const u32 = float16Buf.getUint32(0)
     return this.writeUInt16BE(floatU32ToU16(u32), offset)
   }
 
+  /**
+   * Writes a 16-bit float `value` to `buf` at the specified `offset` as little-endian. The `value` must be a JavaScript number. Behavior is undefined when `value` is anything other than a JavaScript number.
+   * @param val - Number to be written to `buf`.
+   * @param offset - Number of bytes to skip before starting to write. Must satisfy: `0 <= offset <= buf.length - 2`. Default: `0`.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *
+   *   const buf = new Buffer(2)
+   *   buf.writeFloat16LE(123.456, 0)
+   *   console.log(buf.toString('hex')) // Prints: b757
+   * })()
+   * ```
+   */
   writeFloat16LE (val: number, offset: number = 0): this {
     float16Buf.setFloat32(0, val)
     const u32 = float16Buf.getUint32(0)
@@ -2694,6 +2828,22 @@ export class Buffer extends Uint8Array {
     return this
   }
 
+  /**
+   * Treats `buf` as a [most-significant bit](https://en.wikipedia.org/wiki/Most_significant_bit) array and write a bit at the specified bit offset.
+   * @param val - Bit value to write.
+   * @param bitOffset - bit offset to read from.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *
+   *   const buf = new Buffer(1)
+   *   const bits = [1, 0, 0, 1, 0, 1, 1, 0]
+   *   for (let i = 0; i < 8; i++) buf.writeBitMSB(bits[i], i)
+   *   console.log(buf[0].toString(2)) // Prints: 10010110
+   * })()
+   * ```
+   */
   writeBitMSB (val: number | boolean, bitOffset: number): this {
     const tmp = [bitOffset >>> 3, (bitOffset & 7) ^ 7]
     if (val) this[tmp[0]] |= 1 << tmp[1]
@@ -2701,6 +2851,22 @@ export class Buffer extends Uint8Array {
     return this
   }
 
+  /**
+   * Treats `buf` as a [least significant bit](https://en.wikipedia.org/wiki/Least_significant_bit) array and write a bit at the specified bit offset.
+   * @param val - Bit value to write.
+   * @param bitOffset - bit offset to read from.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *
+   *   const buf = new Buffer(1)
+   *   const bits = [0, 1, 1, 0, 1, 0, 0, 1]
+   *   for (let i = 0; i < 8; i++) buf.writeBitLSB(bits[i], i)
+   *   console.log(buf[0].toString(2)) // Prints: 10010110
+   * })()
+   * ```
+   */
   writeBitLSB (val: number | boolean, bitOffset: number): this {
     const tmp = [this.length - (bitOffset >>> 3) - 1, bitOffset & 7]
     if (val) this[tmp[0]] |= 1 << tmp[1]
@@ -2751,6 +2917,7 @@ export class Buffer extends Uint8Array {
    * Pack `vals` into `buf` according to the format string `format`. The arguments must match the `vals` required by the `format` exactly. The `buf`’s size in bytes must larger then the size required by the `format`, as reflected by `Buffer.packCalcSize()`.
    * @param format - A format string.
    * @param vals - Values to pack.
+   * @remarks Unlike Python struct, this method does not support native size and alignment (that wouldn't make much sense in a javascript). Instead, specify byte order and emit pad bytes explicitly.
    * @example
    * ```js
    * ;(async function () {
@@ -2774,6 +2941,7 @@ export class Buffer extends Uint8Array {
   /**
    * Unpack from the `buf` (presumably packed by `pack(format, ...))` according to the format string `format`. The result is a tuple even if it contains exactly one item. The `buf`’s size in bytes must larger then the size required by the `format`, as reflected by `Buffer.packCalcSize()`.
    * @param format - A format string.
+   * @remarks Unlike Python struct, this method does not support native size and alignment (that wouldn't make much sense in a javascript). Instead, specify byte order and emit pad bytes explicitly.
    * @example
    * ```js
    * ;(async function () {
@@ -2789,8 +2957,9 @@ export class Buffer extends Uint8Array {
   }
 
   /**
-   * Iteratively unpack from the `buf` according to the format string `format`. This function returns an iterator which will read equally sized chunks from the `buf` until remaining contents smaller then the size required by the `format`, as reflected by `Buffer.packCalcSize()`.
+   * Iteratively unpack from the `buf` according to the format string `format`. This method returns an iterator which will read equally sized chunks from the `buf` until remaining contents smaller then the size required by the `format`, as reflected by `Buffer.packCalcSize()`.
    * @param format - A format string.
+   * @remarks Unlike Python struct, this method does not support native size and alignment (that wouldn't make much sense in a javascript). Instead, specify byte order and emit pad bytes explicitly.
    * @example
    * ```js
    * ;(async function () {

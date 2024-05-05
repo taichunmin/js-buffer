@@ -1138,7 +1138,7 @@ describe('read/write Float16', () => {
     { hex: 'fc00', float: -Infinity },
     { hex: '7e00', float: NaN },
     { hex: 'fe00', float: -NaN },
-  ])('Buffer.from("$hex", "hex").readFloat16BE() = $expected', ({ hex, float }) => {
+  ])('Buffer.from("$hex", "hex").readFloat16BE() = $float', ({ hex, float }) => {
     expect(Buffer.from(hex, 'hex').readFloat16BE()).toBe(float)
     expect(new Buffer(2).writeFloat16BE(float).toString('hex')).toBe(hex)
   })
@@ -1638,8 +1638,10 @@ describe('Buffer.unpack()', () => {
 describe('Buffer.iterUnpack()', () => {
   test('should unpack all tuples', () => {
     const buf1 = Buffer.from('01fe01fe', 'hex')
-    const actual = [...buf1.iterUnpack('!BB')]
-    expect(actual).toEqual([[1, 254], [1, 254]])
+    const actual1 = [...buf1.iterUnpack('!BB')]
+    expect(actual1).toEqual([[1, 254], [1, 254]])
+    const actual2 = [...Buffer.iterUnpack(buf1, '!BB')]
+    expect(actual2).toEqual([[1, 254], [1, 254]])
   })
 
   test('should throw error with invalid type of buf', () => {
@@ -1661,6 +1663,16 @@ describe('Buffer.iterUnpack()', () => {
       expect(err.message).toMatch(/lenRequired/)
     }
   })
+
+  test('should throw error with unknown format', () => {
+    expect.hasAssertions()
+    try {
+      jest.spyOn(Buffer, 'packParseFormat').mockReturnValueOnce({ littleEndian: false, items: [[1, 'z']] })
+      console.log([...Buffer.iterUnpack(Buffer.from('00', 'hex'), 'z')])
+    } catch (err) {
+      expect(err.message).toMatch(/Unknown format/)
+    }
+  })
 })
 
 describe('Buffer.packParseFormat()', () => {
@@ -1673,7 +1685,7 @@ describe('Buffer.packParseFormat()', () => {
     }
   })
 
-  test('should throw error with invalid type of format', () => {
+  test('should throw error with invalid format', () => {
     expect.hasAssertions()
     try {
       Buffer.packParseFormat('!')
