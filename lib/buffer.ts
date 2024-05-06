@@ -1,81 +1,53 @@
 import _ from 'lodash'
 import { type Uint8Array } from './Uint8Array'
 
-const BASE64_CHAR = _.transform('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'.split(''), (m, v, k) => {
-  m.set(k, v).set(v, k)
-}, new Map()).set('-', 62).set('_', 63)
-
-const BASE64URL_CHAR = _.transform('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'.split(''), (m, v, k) => {
-  m.set(k, v).set(v, k)
-}, new Map()).set('+', 62).set('/', 63)
-
-const HEX_CHAR = _.transform('0123456789abcdef'.split(''), (m, v, k) => {
-  m.set(k, v).set(v, k).set(_.toUpper(v), k)
-}, new Map())
-
+const float16Buf = new DataView(new ArrayBuffer(4))
+const isNativeLittleEndian = new Uint8Array(new Uint16Array([0x1234]).buffer)[0] === 0x12
 const K_MAX_LENGTH = 0x7FFFFFFF
 const SIGNED_MAX_VALUE = [0, 0x7F, 0x7FFF, 0x7FFFFF, 0x7FFFFFFF, 0x7FFFFFFFFF, 0x7FFFFFFFFFFF]
 const SIGNED_OFFSET = [0, 0x100, 0x10000, 0x1000000, 0x100000000, 0x10000000000, 0x1000000000000]
 
-function isInstance<T> (obj: any, type: Class<T>): obj is T {
-  return obj instanceof type || obj?.constructor?.name === type?.name
-}
+const CHARCODE_BASE64 = new Map() as unknown as BaseCharMap
+initEncodingMap(CHARCODE_BASE64, '-_', 62)
+initEncodingMap(CHARCODE_BASE64, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/')
 
-function isSharedArrayBuffer (val: any): val is SharedArrayBuffer {
-  return typeof SharedArrayBuffer !== 'undefined' && (isInstance(val, SharedArrayBuffer) || isInstance(val?.buffer, SharedArrayBuffer))
-}
+const CHARCODE_BASE64URL = new Map() as unknown as BaseCharMap
+initEncodingMap(CHARCODE_BASE64URL, '+/', 62)
+initEncodingMap(CHARCODE_BASE64URL, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_')
 
-function isIterable <T> (val: any): val is Iterable<T> {
-  return typeof val?.[Symbol.iterator] === 'function'
-}
+const CHARCODE_HEX = new Map() as unknown as BaseCharMap
+initEncodingMap(CHARCODE_HEX, 'ABCDEF', 10)
+initEncodingMap(CHARCODE_HEX, '0123456789abcdef')
 
-function floatU32ToU16 (u32: number): number {
-  // Float32: 1 + 8 + 23, bits = 1 xxxxxxxx 11111111110000000000000
-  //                  0x7FFFFF = 0 00000000 11111111111111111111111
-  // Float16: 1 + 5 + 10, bits = 1    xxxxx 1111111111
-  //                    0x0200 = 0    00000 1000000000
-  //                    0x03FF = 0    00000 1111111111
-  //                    0x7C00 = 0    11111 0000000000
-  //                    0x8000 = 1    00000 0000000000
-  const exp = (u32 >>> 23) & 0xFF
-  if (exp === 0xFF) return ((u32 >>> 16) & 0x8000) + 0x7C00 + ((u32 & 0x7FFFFF) !== 0 ? 0x200 : 0) // +-inf / NaN
-  if (exp === 0) return ((u32 >>> 16) & 0x8000) + ((u32 >>> 13) & 0x3FF)
-  return ((u32 >>> 16) & 0x8000) + (((exp - 112) << 10) & 0x7C00) + ((u32 >>> 13) & 0x3FF)
-}
+const fromStringFns = {
+  'ucs-2': 'fromUcs2String',
+  'utf-16le': 'fromUcs2String',
+  'utf-8': 'fromUtf8String',
+  ascii: 'fromLatin1String',
+  base64: 'fromBase64String',
+  base64url: 'fromBase64urlString',
+  binary: 'fromLatin1String',
+  hex: 'fromHexString',
+  latin1: 'fromLatin1String',
+  ucs2: 'fromUcs2String',
+  utf16le: 'fromUcs2String',
+  utf8: 'fromUtf8String',
+} as const
 
-function floatU16ToU32 (u16: number): number {
-  // Float32: 1 + 8 + 23, bits = 1 xxxxxxxx 11111111110000000000000
-  //                0x00400000 = 0 00000000 10000000000000000000000
-  //                0x007FE000 = 0 00000000 11111111110000000000000
-  //                0x7F800000 = 0 11111111 00000000000000000000000
-  //                0x80000000 = 1 00000000 00000000000000000000000
-  // Float16: 1 + 5 + 10, bits = 1    xxxxx 1111111111
-  //                    0x03FF = 0    00000 1111111111
-  const exp = (u16 >>> 10) & 0x1F
-  if (exp === 0x1F) return ((u16 << 16) & 0x80000000) + 0x7F800000 + ((u16 & 0x3FF) !== 0 ? 0x400000 : 0) // +-inf / NaN
-  if (exp === 0) return ((u16 << 16) & 0x80000000) + ((u16 << 13) & 0x7FE000)
-  return ((u16 << 16) & 0x80000000) + (((exp + 112) << 23) & 0x7F800000) + ((u16 << 13) & 0x7FE000)
-}
-
-const float16Buf = new DataView(new ArrayBuffer(4))
-
-enum Encoding {
-  'ucs-2' = 'ucs-2',
-  'utf-16le' = 'utf-16le',
-  'utf-8' = 'utf-8',
-  ascii = 'ascii',
-  base64 = 'base64',
-  base64url = 'base64url',
-  binary = 'binary',
-  hex = 'hex',
-  latin1 = 'latin1',
-  ucs2 = 'ucs2',
-  utf16le = 'utf16le',
-  utf8 = 'utf8'
-}
-type KeyOfEncoding = keyof typeof Encoding
-
-const isNativeLittleEndian = new Uint8Array(new Uint16Array([0x1234]).buffer)[0] === 0x12
+const toStringFns = {
+  'ucs-2': 'toUcs2String',
+  'utf-16le': 'toUcs2String',
+  'utf-8': 'toUtf8String',
+  ascii: 'toLatin1String',
+  base64: 'toBase64String',
+  base64url: 'toBase64urlString',
+  binary: 'toLatin1String',
+  hex: 'toHexString',
+  latin1: 'toLatin1String',
+  ucs2: 'toUcs2String',
+  utf16le: 'toUcs2String',
+  utf8: 'toUtf8String',
+} as const
 
 /**
  * @see [Format Characters](https://docs.python.org/3/library/struct.html#format-characters)
@@ -659,10 +631,10 @@ export class Buffer extends Uint8Array {
     const buf = new Buffer(base64.length * 3 >>> 2)
     let parsedLen = 0
     for (let i = 0; i < base64.length; i += 4) {
-      const u24 = (BASE64_CHAR.get(base64[i]) << 18) +
-        (BASE64_CHAR.get(base64[i + 1]) << 12) +
-        (BASE64_CHAR.get(base64[i + 2]) << 6) +
-        BASE64_CHAR.get(base64[i + 3])
+      const u24 = (CHARCODE_BASE64.get(base64[i]) << 18) +
+        (CHARCODE_BASE64.get(base64[i + 1]) << 12) +
+        (CHARCODE_BASE64.get(base64[i + 2]) << 6) +
+        CHARCODE_BASE64.get(base64[i + 3])
       buf[parsedLen++] = (u24 >>> 16) & 0xFF
       buf[parsedLen++] = (u24 >>> 8) & 0xFF
       buf[parsedLen++] = (u24 >>> 0) & 0xFF
@@ -687,7 +659,7 @@ export class Buffer extends Uint8Array {
   static fromHexString (hex: string): Buffer {
     hex = hex.replace(/[^0-9A-Fa-f]/g, '')
     const buf = new Buffer(hex.length >>> 1)
-    for (let i = 0; i < buf.length; i++) buf[i] = HEX_CHAR.get(hex[i * 2]) << 4 | HEX_CHAR.get(hex[i * 2 + 1])
+    for (let i = 0; i < buf.length; i++) buf[i] = CHARCODE_HEX.get(hex[i * 2]) << 4 | CHARCODE_HEX.get(hex[i * 2 + 1])
     return buf
   }
 
@@ -697,24 +669,12 @@ export class Buffer extends Uint8Array {
    * @param encoding - The encoding of `string`. Default: `'utf8'`.
    * @group Static Methods
    */
-  static fromString (string: string, encoding: KeyOfEncoding = 'utf8'): Buffer {
-    encoding = _.toLower(encoding) as KeyOfEncoding
-    if (!Buffer.isEncoding(encoding)) throw new TypeError(`Unknown encoding: ${encoding as string}`)
-    const fromStringFns = {
-      'ucs-2': Buffer.fromUcs2String,
-      'utf-16le': Buffer.fromUcs2String,
-      'utf-8': Buffer.fromUtf8String,
-      ascii: Buffer.fromLatin1String,
-      base64: Buffer.fromBase64String,
-      base64url: Buffer.fromBase64urlString,
-      binary: Buffer.fromLatin1String,
-      hex: Buffer.fromHexString,
-      latin1: Buffer.fromLatin1String,
-      ucs2: Buffer.fromUcs2String,
-      utf16le: Buffer.fromUcs2String,
-      utf8: Buffer.fromUtf8String,
-    }
-    return fromStringFns[encoding](string)
+  static fromString (string: string, encoding: KeyOfEncoding): Buffer
+
+  static fromString (string: string, encoding: string = 'utf8'): Buffer {
+    encoding = _.toLower(encoding)
+    if (!Buffer.isEncoding(encoding)) throw new TypeError(`Unknown encoding: ${encoding}`)
+    return Buffer[fromStringFns[encoding]](string)
   }
 
   /**
@@ -2145,21 +2105,7 @@ export class Buffer extends Uint8Array {
   toString (encoding: KeyOfEncoding = 'utf8', start: number = 0, end: number = this.length): string {
     encoding = _.toLower(encoding) as KeyOfEncoding
     if (!Buffer.isEncoding(encoding)) throw new TypeError(`Unknown encoding: ${encoding as string}`)
-    const toStringFns = {
-      'ucs-2': Buffer.toUcs2String,
-      'utf-16le': Buffer.toUcs2String,
-      'utf-8': Buffer.toUtf8String,
-      ascii: Buffer.toLatin1String,
-      base64: Buffer.toBase64String,
-      base64url: Buffer.toBase64urlString,
-      binary: Buffer.toLatin1String,
-      hex: Buffer.toHexString,
-      latin1: Buffer.toLatin1String,
-      ucs2: Buffer.toUcs2String,
-      utf16le: Buffer.toUcs2String,
-      utf8: Buffer.toUtf8String,
-    }
-    return toStringFns[encoding](this.subarray(start, end))
+    return Buffer[toStringFns[encoding]](this.subarray(start, end))
   }
 
   /**
@@ -2188,9 +2134,7 @@ export class Buffer extends Uint8Array {
    * @group Static Methods
    */
   static toUcs2String (buf: Buffer): string {
-    const arr = []
-    for (let i = 0; i < buf.length; i += 2) arr.push(String.fromCharCode(buf.readUInt16LE(i)))
-    return arr.join('')
+    return new TextDecoder('utf-16le').decode(buf)
   }
 
   /**
@@ -2226,10 +2170,10 @@ export class Buffer extends Uint8Array {
         ((i + 1 < buf.length ? buf[i + 1] : 0) << 8) +
         (i + 2 < buf.length ? buf[i + 2] : 0)
       arr.push(...[
-        BASE64_CHAR.get(u24 >>> 18 & 0x3F),
-        BASE64_CHAR.get(u24 >>> 12 & 0x3F),
-        BASE64_CHAR.get(u24 >>> 6 & 0x3F),
-        BASE64_CHAR.get(u24 >>> 0 & 0x3F),
+        CHARCODE_BASE64.get(u24 >>> 18 & 0x3F),
+        CHARCODE_BASE64.get(u24 >>> 12 & 0x3F),
+        CHARCODE_BASE64.get(u24 >>> 6 & 0x3F),
+        CHARCODE_BASE64.get(u24 >>> 0 & 0x3F),
       ])
     }
     const tmp = arr.length + (buf.length + 2) % 3 - 2
@@ -2249,10 +2193,10 @@ export class Buffer extends Uint8Array {
         ((i + 1 < buf.length ? buf[i + 1] : 0) << 8) +
         (i + 2 < buf.length ? buf[i + 2] : 0)
       arr.push(...[
-        BASE64URL_CHAR.get(u24 >>> 18 & 0x3F),
-        BASE64URL_CHAR.get(u24 >>> 12 & 0x3F),
-        BASE64URL_CHAR.get(u24 >>> 6 & 0x3F),
-        BASE64URL_CHAR.get(u24 >>> 0 & 0x3F),
+        CHARCODE_BASE64URL.get(u24 >>> 18 & 0x3F),
+        CHARCODE_BASE64URL.get(u24 >>> 12 & 0x3F),
+        CHARCODE_BASE64URL.get(u24 >>> 6 & 0x3F),
+        CHARCODE_BASE64URL.get(u24 >>> 0 & 0x3F),
       ])
     }
     const tmp = (buf.length + 2) % 3 - 2
@@ -2266,7 +2210,7 @@ export class Buffer extends Uint8Array {
    */
   static toHexString (buf: Buffer): string {
     const arr = []
-    for (let i = 0; i < buf.length; i++) arr.push(HEX_CHAR.get(buf[i] >>> 4), HEX_CHAR.get(buf[i] & 0xF))
+    for (let i = 0; i < buf.length; i++) arr.push(CHARCODE_HEX.get(buf[i] >>> 4), CHARCODE_HEX.get(buf[i] & 0xF))
     return arr.join('')
   }
 
@@ -2910,7 +2854,9 @@ export class Buffer extends Uint8Array {
    * ```
    */
   xor (): number {
-    return _.reduce(this, (xor, v) => xor ^ v, 0)
+    let xor = 0
+    for (const v of this) xor ^= v
+    return xor
   }
 
   /**
@@ -3204,6 +3150,71 @@ interface PackFormat {
   littleEndian: boolean
   items: Array<[number, string]>
 }
+
+interface BaseCharMap {
+  set: ((key: string, val: number) => this) & ((key: number, val: string) => this)
+  get: ((key: string) => number) & ((key: number) => string)
+}
+
+function initEncodingMap (map: BaseCharMap, str: string, offset: number = 0): void {
+  for (let i = 0; i < str.length; i++) map.set(i + offset, str[i]).set(str[i], i + offset)
+}
+
+function isInstance<T> (obj: any, type: Class<T>): obj is T {
+  return obj instanceof type || obj?.constructor?.name === type?.name
+}
+
+function isSharedArrayBuffer (val: any): val is SharedArrayBuffer {
+  return typeof SharedArrayBuffer !== 'undefined' && (isInstance(val, SharedArrayBuffer) || isInstance(val?.buffer, SharedArrayBuffer))
+}
+
+function isIterable <T> (val: any): val is Iterable<T> {
+  return typeof val?.[Symbol.iterator] === 'function'
+}
+
+function floatU32ToU16 (u32: number): number {
+  // Float32: 1 + 8 + 23, bits = 1 xxxxxxxx 11111111110000000000000
+  //                  0x7FFFFF = 0 00000000 11111111111111111111111
+  // Float16: 1 + 5 + 10, bits = 1    xxxxx 1111111111
+  //                    0x0200 = 0    00000 1000000000
+  //                    0x03FF = 0    00000 1111111111
+  //                    0x7C00 = 0    11111 0000000000
+  //                    0x8000 = 1    00000 0000000000
+  const exp = (u32 >>> 23) & 0xFF
+  if (exp === 0xFF) return ((u32 >>> 16) & 0x8000) + 0x7C00 + ((u32 & 0x7FFFFF) !== 0 ? 0x200 : 0) // +-inf / NaN
+  if (exp === 0) return ((u32 >>> 16) & 0x8000) + ((u32 >>> 13) & 0x3FF)
+  return ((u32 >>> 16) & 0x8000) + (((exp - 112) << 10) & 0x7C00) + ((u32 >>> 13) & 0x3FF)
+}
+
+function floatU16ToU32 (u16: number): number {
+  // Float32: 1 + 8 + 23, bits = 1 xxxxxxxx 11111111110000000000000
+  //                0x00400000 = 0 00000000 10000000000000000000000
+  //                0x007FE000 = 0 00000000 11111111110000000000000
+  //                0x7F800000 = 0 11111111 00000000000000000000000
+  //                0x80000000 = 1 00000000 00000000000000000000000
+  // Float16: 1 + 5 + 10, bits = 1    xxxxx 1111111111
+  //                    0x03FF = 0    00000 1111111111
+  const exp = (u16 >>> 10) & 0x1F
+  if (exp === 0x1F) return ((u16 << 16) & 0x80000000) + 0x7F800000 + ((u16 & 0x3FF) !== 0 ? 0x400000 : 0) // +-inf / NaN
+  if (exp === 0) return ((u16 << 16) & 0x80000000) + ((u16 << 13) & 0x7FE000)
+  return ((u16 << 16) & 0x80000000) + (((exp + 112) << 23) & 0x7F800000) + ((u16 << 13) & 0x7FE000)
+}
+
+enum Encoding {
+  'ucs-2' = 'ucs-2',
+  'utf-16le' = 'utf-16le',
+  'utf-8' = 'utf-8',
+  ascii = 'ascii',
+  base64 = 'base64',
+  base64url = 'base64url',
+  binary = 'binary',
+  hex = 'hex',
+  latin1 = 'latin1',
+  ucs2 = 'ucs2',
+  utf16le = 'utf16le',
+  utf8 = 'utf8'
+}
+type KeyOfEncoding = keyof typeof Encoding
 
 type Class<T> = new (...args: any[]) => T
 
