@@ -1726,3 +1726,29 @@ describe('util.inspect()', () => {
     expect(actual).toBe('<Buffer 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ... 50 more bytes>')
   })
 })
+
+describe('function alias test', () => {
+  test.each([
+    { a: 'readUInt8', b: 'readUint8' },
+    { a: 'readUInt16BE', b: 'readUint16BE' },
+    { a: 'readUInt16LE', b: 'readUint16LE' },
+    { a: 'readUInt32BE', b: 'readUint32BE' },
+    { a: 'readUInt32LE', b: 'readUint32LE' },
+    { a: 'readUIntBE', b: 'readUintBE' },
+    { a: 'readUIntLE', b: 'readUintLE' },
+    { a: 'readBigUInt64BE', b: 'readBigUint64BE' },
+    { a: 'readBigUInt64LE', b: 'readBigUint64LE' },
+    { a: 'writeUInt8', b: 'writeUint8' },
+    { a: 'writeUInt16BE', b: 'writeUint16BE' },
+    { a: 'writeUInt16LE', b: 'writeUint16LE' },
+    { a: 'writeUInt32BE', b: 'writeUint32BE' },
+    { a: 'writeUInt32LE', b: 'writeUint32LE' },
+    { a: 'writeUIntBE', b: 'writeUintBE' },
+    { a: 'writeUIntLE', b: 'writeUintLE' },
+    { a: 'writeBigUInt64BE', b: 'writeBigUint64BE' },
+    { a: 'writeBigUInt64LE', b: 'writeBigUint64LE' },
+  ])('Buffer#$a should be alias of Buffer#$b', ({ a, b }) => {
+    const buf = new Buffer()
+    expect(buf[a as any]).toBe(buf[b as any])
+  })
+})

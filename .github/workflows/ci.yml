@@ -76,6 +76,18 @@ jobs:
         uses: actions/deploy-pages@v4
       - name: 發布至 npm
         uses: JS-DevTools/npm-publish@v3
+        id: npm-publish
         with:
           access: public
           token: ${{ secrets.NPM_TOKEN }}
+      - name: jsDelivr Purge
+        if: ${{ steps.npm-publish.outputs.type }}
+        uses: egad13/purge-jsdelivr-cache@v1
+        with:
+          url: |
+            https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.global.js
+            https://cdn.jsdelivr.net/npm/@taichunmin/buffer/dist/buffer.global.js
+            https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.global.min.js
+            https://cdn.jsdelivr.net/npm/@taichunmin/buffer/dist/buffer.global.min.js
+            https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm
+            https://cdn.jsdelivr.net/npm/@taichunmin/buffer/dist/buffer.mjs/+esm
