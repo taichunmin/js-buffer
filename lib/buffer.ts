@@ -1,23 +1,26 @@
 import _ from 'lodash'
 import { type Uint8Array } from './Uint8Array'
 
+const customBufferSymbol = Symbol.for('taichunmin.buffer')
+const customInspectSymbol = Symbol.for('nodejs.util.inspect.custom')
 const float16Buf = new DataView(new ArrayBuffer(4))
+const INSPECT_MAX_BYTES = 50
 const isNativeLittleEndian = new Uint8Array(new Uint16Array([0x1234]).buffer)[0] === 0x12
 const K_MAX_LENGTH = 0x7FFFFFFF
 const SIGNED_MAX_VALUE = [0, 0x7F, 0x7FFF, 0x7FFFFF, 0x7FFFFFFF, 0x7FFFFFFFFF, 0x7FFFFFFFFFFF]
 const SIGNED_OFFSET = [0, 0x100, 0x10000, 0x1000000, 0x100000000, 0x10000000000, 0x1000000000000]
 
-const CHARCODE_BASE64 = new Map() as unknown as BaseCharMap
-initEncodingMap(CHARCODE_BASE64, '-_', 62)
-initEncodingMap(CHARCODE_BASE64, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/')
+const CHARCODE_BASE64 = new Map() as unknown as CharCodeMap
+initCharCodeMap(CHARCODE_BASE64, '-_', 62)
+initCharCodeMap(CHARCODE_BASE64, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/')
 
-const CHARCODE_BASE64URL = new Map() as unknown as BaseCharMap
-initEncodingMap(CHARCODE_BASE64URL, '+/', 62)
-initEncodingMap(CHARCODE_BASE64URL, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_')
+const CHARCODE_BASE64URL = new Map() as unknown as CharCodeMap
+initCharCodeMap(CHARCODE_BASE64URL, '+/', 62)
+initCharCodeMap(CHARCODE_BASE64URL, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_')
 
-const CHARCODE_HEX = new Map() as unknown as BaseCharMap
-initEncodingMap(CHARCODE_HEX, 'ABCDEF', 10)
-initEncodingMap(CHARCODE_HEX, '0123456789abcdef')
+const CHARCODE_HEX = new Map() as unknown as CharCodeMap
+initCharCodeMap(CHARCODE_HEX, 'ABCDEF', 10)
+initCharCodeMap(CHARCODE_HEX, '0123456789abcdef')
 
 const fromStringFns = {
   'ucs-2': 'fromUcs2String',
@@ -383,6 +386,7 @@ export class Buffer extends Uint8Array {
    * ```
    */
   static concat (list: Buffer[], totalLength?: number): Buffer {
+    if (!_.isArray(list)) throw new TypeError('"list" argument must be an array of Buffers')
     if (_.isNil(totalLength)) totalLength = _.sumBy(list, 'length')
     if (totalLength < 0) totalLength = 0
     const buf = new Buffer(totalLength)
@@ -716,6 +720,12 @@ export class Buffer extends Uint8Array {
   }
 
   /**
+   * A helper function which `Buffer.isBuffer()` will invoke and determine whether `this` is a `Buffer` or not.
+   * @returns `true` if `this` is a `Buffer`, `false` otherwise.
+   */
+  [customBufferSymbol] (): boolean { return true }
+
+  /**
    * @returns `true` if `obj` is a `Buffer`, `false` otherwise.
    * @group Static Methods
    * @example
@@ -732,7 +742,7 @@ export class Buffer extends Uint8Array {
    * ```
    */
   static isBuffer (obj: any): obj is Buffer {
-    return isInstance(obj, Buffer)
+    return obj?.[customBufferSymbol]?.() ?? false
   }
 
   /**
@@ -999,13 +1009,11 @@ export class Buffer extends Uint8Array {
     }
     const me = this.subarray(sourceStart, sourceEnd)
     target = target.subarray(targetStart, targetEnd)
-    const len = Math.max(me.length, target.length)
+    const len = Math.min(me.length, target.length)
     for (let i = 0; i < len; i++) {
-      if (i >= me.length) return -1
-      if (i >= target.length) return 1
       if (me[i] !== target[i]) return me[i] < target[i] ? -1 : 1
     }
-    return 0
+    return me.length === target.length ? 0 : (me.length < target.length ? -1 : 1)
   }
 
   /**
@@ -2109,6 +2117,16 @@ export class Buffer extends Uint8Array {
   }
 
   /**
+   * Custom inspect functions which `util.inspect()` will invoke and use the result of when inspecting the object.
+   * @returns a string representation of `buf`.
+   */
+  [customInspectSymbol] (): string {
+    const tmp = this.subarray(0, INSPECT_MAX_BYTES).toString('hex').match(/.{2}/g) as string[]
+    const strMoreBytes = this.length > INSPECT_MAX_BYTES ? ` ... ${this.length - INSPECT_MAX_BYTES} more bytes` : ''
+    return `<Buffer ${tmp.join(' ')}${strMoreBytes}>`
+  }
+
+  /**
    * Creates a new `Buffer` which is reverse of the original `buf`.
    * @example
    * ```js
@@ -3151,12 +3169,12 @@ interface PackFormat {
   items: Array<[number, string]>
 }
 
-interface BaseCharMap {
+interface CharCodeMap {
   set: ((key: string, val: number) => this) & ((key: number, val: string) => this)
   get: ((key: string) => number) & ((key: number) => string)
 }
 
-function initEncodingMap (map: BaseCharMap, str: string, offset: number = 0): void {
+function initCharCodeMap (map: CharCodeMap, str: string, offset: number = 0): void {
   for (let i = 0; i < str.length; i++) map.set(i + offset, str[i]).set(str[i], i + offset)
 }
 

@@ -7,7 +7,7 @@
   "main": "index.js",
   "name": "@taichunmin/buffer",
   "unpkg": "dist/buffer.global.js",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "author": {
     "email": "taichunmin@gmail.com",
     "name": "Chunmin Tai",

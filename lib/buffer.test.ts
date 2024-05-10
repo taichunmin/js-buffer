@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import { Buffer } from './buffer'
+import util from 'node:util'
 
 describe('new Buffer', () => {
   test('0 arguments', () => {
@@ -614,6 +615,15 @@ describe('Buffer.concat()', () => {
   test('return truncated buffer', () => {
     const actual = Buffer.concat([Buffer.from('abc')], 1)
     expect(actual.toString()).toEqual('a')
+  })
+
+  test('should throw error with invalid list', () => {
+    expect.hasAssertions()
+    try {
+      Buffer.concat('' as any)
+    } catch (err) {
+      expect(err.message).toMatch(/an array of Buffers/)
+    }
   })
 })
 
@@ -1703,4 +1713,16 @@ describe('Buffer.packParseFormat()', () => {
 test('Buffer.packCalcSize()', () => {
   const actual = Buffer.packCalcSize('!bbbx5sbbb')
   expect(actual).toBe(12)
+})
+
+describe('util.inspect()', () => {
+  test('util.inpect() with short buffer', () => {
+    const actual = util.inspect(Buffer.from('1122334455', 'hex'))
+    expect(actual).toBe('<Buffer 11 22 33 44 55>')
+  })
+
+  test('util.inpect() with long buffer', () => {
+    const actual = util.inspect(new Buffer(100))
+    expect(actual).toBe('<Buffer 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ... 50 more bytes>')
+  })
 })

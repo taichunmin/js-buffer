@@ -133,6 +133,7 @@ out
 *.html
 *.nojekyll
 *.test.ts
+*.xml
 /.eslintrc.*
 /*.config.js
 /dist/assets
@@ -141,3 +142,5 @@ out
 /tsup.config.ts
 /typedoc
 /typedoc.json
+dotenv.ts
+sitemap.ts
