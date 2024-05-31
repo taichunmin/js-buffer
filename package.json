@@ -1,13 +1,12 @@
 {
-  "browser": "dist/buffer.global.js",
+  "browser": "./dist/buffer.global.js",
   "description": "A cross platform alternative of Node buffer base on UInt8Array.",
   "homepage": "https://github.com/taichunmin/js-buffer",
-  "jsdelivr": "dist/buffer.global.js",
   "license": "MIT",
-  "main": "index.js",
+  "main": "./dist/buffer.js",
+  "module": "./dist/buffer.mjs",
   "name": "@taichunmin/buffer",
-  "unpkg": "dist/buffer.global.js",
-  "version": "0.13.0",
+  "version": "0.13.1",
   "author": {
     "email": "taichunmin@gmail.com",
     "name": "Chunmin Tai",
@@ -28,9 +27,9 @@
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
-    "@types/lodash": "^4.17.1",
-    "@types/node": "^20.12.11",
-    "@typescript-eslint/eslint-plugin": "^7.8.0",
+    "@types/lodash": "^4.17.4",
+    "@types/node": "^20.12.13",
+    "@typescript-eslint/eslint-plugin": "^7.11.0",
     "dayjs": "^1.11.11",
     "dotenv": "^16.4.5",
     "eslint": "^8.0.1",
@@ -40,12 +39,12 @@
     "eslint-plugin-promise": "^6.1.1",
     "eslint-plugin-tsdoc": "^0.2.17",
     "jest": "^29.7.0",
-    "nodemon": "^3.1.0",
-    "ts-jest": "^29.1.2",
+    "nodemon": "^3.1.2",
+    "ts-jest": "^29.1.4",
     "tsup": "^8.0.2",
-    "tsx": "^4.9.3",
+    "tsx": "^4.11.0",
     "typedoc": "^0.25.13",
-    "typedoc-plugin-mdn-links": "^3.1.24",
+    "typedoc-plugin-mdn-links": "^3.1.27",
     "typedoc-plugin-missing-exports": "^2.2.0",
     "typedoc-plugin-rename-defaults": "^0.7.0",
     "typescript": "^5.4.5"
@@ -78,15 +77,15 @@
     "url": "git+https://github.com/taichunmin/js-buffer.git"
   },
   "scripts": {
-    "build:sitemap": "tsx ./sitemap.ts",
+    "build": "yarn build:js && yarn build:docs && yarn build:sitemap",
     "build:docs": "typedoc --out dist lib/buffer.ts",
     "build:js": "tsup",
-    "build": "yarn build:js && yarn build:docs && yarn build:sitemap",
+    "build:sitemap": "tsx ./sitemap.ts",
     "dev:docs": "nodemon --watch lib --ext ts --exec \"yarn build:docs\"",
-    "lint:ci": "eslint --ext ts --fix ./lib",
     "lint": "yarn lint:ci --fix",
+    "lint:ci": "eslint --ext ts --fix ./lib",
     "publish:test": "npm publish --access public --dry-run",
-    "test:ci": "jest --roots ./lib --ci --coverage",
-    "test": "jest --roots ./lib --"
+    "test": "jest --roots ./lib --",
+    "test:ci": "jest --roots ./lib --ci --coverage"
   }
 }
