@@ -1,12 +1,12 @@
 {
-  "browser": "./dist/buffer.global.js",
   "description": "A cross platform alternative of Node buffer base on UInt8Array.",
   "homepage": "https://github.com/taichunmin/js-buffer",
+  "jsnext:main": "dist/buffer.mjs",
   "license": "MIT",
-  "main": "./dist/buffer.js",
-  "module": "./dist/buffer.mjs",
+  "main": "dist/buffer.js",
+  "module": "dist/buffer.mjs",
   "name": "@taichunmin/buffer",
-  "version": "0.13.1",
+  "version": "0.13.2",
   "author": {
     "email": "taichunmin@gmail.com",
     "name": "Chunmin Tai",
