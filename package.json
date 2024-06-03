@@ -7,7 +7,7 @@
   "main": "dist/buffer.js",
   "module": "dist/buffer.mjs",
   "name": "@taichunmin/buffer",
-  "version": "0.13.3",
+  "version": "0.13.4",
   "author": {
     "email": "taichunmin@gmail.com",
     "name": "Chunmin Tai",
@@ -53,15 +53,13 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "browser": "./dist/buffer.global.js",
-      "import": {
-        "default": "./dist/buffer.mjs",
-        "types": "./dist/buffer.d.mts"
+      "types": {
+        "import": "./dist/buffer.d.mts",
+        "require": "./dist/buffer.d.ts"
       },
-      "require": {
-        "default": "./dist/buffer.js",
-        "types": "./dist/buffer.d.ts"
-      }
+      "import": "./dist/buffer.mjs",
+      "require": "./dist/buffer.js",
+      "script": "./dist/buffer.global.js"
     }
   },
   "keywords": [
