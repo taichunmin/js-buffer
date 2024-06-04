@@ -7,7 +7,7 @@
   "main": "dist/buffer.js",
   "module": "dist/buffer.mjs",
   "name": "@taichunmin/buffer",
-  "version": "0.13.4",
+  "version": "0.13.5",
   "author": {
     "email": "taichunmin@gmail.com",
     "name": "Chunmin Tai",

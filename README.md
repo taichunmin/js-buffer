@@ -59,11 +59,11 @@ Using jsDelivr CDN:
 
 <!-- module -->
 <script type="module">
-  import { Buffer } from 'https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm'
+  import { Buffer } from 'https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm'
 </script>
 
 <!-- module + async import -->
 <script type="module">
-  const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+  const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
 </script>
 ```

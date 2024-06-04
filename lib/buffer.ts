@@ -119,7 +119,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = new Buffer(2)
    *   console.log(buf.length) // Prints: 2
@@ -134,7 +134,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf1 = new Buffer([21, 31])
    *   console.log(buf1.toString('hex')) // Prints: 151f
@@ -160,7 +160,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const uint16 = new Uint16Array([5000, 4000])
    *   const buf = Buffer.from(uint16.buffer) // Shares memory with `uint16`.
@@ -187,7 +187,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.alloc(5)
    *   console.log(buf.toString('hex')) // Prints: 0000000000
@@ -207,7 +207,7 @@ export class Buffer extends Uint8Array {
    *
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.alloc(5, 'a')
    *   console.log(buf.toString('hex')) // Prints: 6161616161
@@ -218,7 +218,7 @@ export class Buffer extends Uint8Array {
    *
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.alloc(11, 'aGVsbG8gd29ybGQ=', 'base64')
    *   console.log(buf.toString('hex')) // Prints: 68656c6c6f20776f726c64
@@ -242,7 +242,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.allocUnsafe(10)
    *   console.log(buf.toString('hex')) // Prints: 00000000000000000000
@@ -262,7 +262,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.allocUnsafeSlow(10)
    *   console.log(buf.toString('hex')) // Prints: 00000000000000000000
@@ -282,7 +282,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const u8arr = new Uint8Array(5)
    *   console.log(Buffer.byteLength(u8arr)) // Prints: 5
@@ -302,7 +302,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const str = '\u00bd + \u00bc = \u00be'
    *   console.log(`${str}: ${str.length} characters, ${Buffer.byteLength(str, 'utf8')} bytes`)
@@ -332,7 +332,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf1 = Buffer.from('1234')
    *   const buf2 = Buffer.from('0123')
@@ -370,7 +370,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf1 = Buffer.alloc(4)
    *   const buf2 = Buffer.alloc(5)
@@ -408,7 +408,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const u16 = new Uint16Array([0, 0xffff])
    *   const buf = Buffer.copyBytesFrom(u16, 1, 1)
@@ -428,7 +428,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   console.log(Buffer.equals(new Buffer([1, 2]), Buffer.from('0102', 'hex'))) // true
    *   console.log(Buffer.equals(Buffer.from(new Uint8Array([1, 2])), Buffer.from('0102', 'hex'))) // true
@@ -453,7 +453,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf1 = Buffer.from([0x62, 0x75, 0x66, 0x66, 0x65, 0x72])
    *   console.log(buf1.toString('hex')) // Prints: 627566666572
@@ -479,7 +479,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const arr = new Uint16Array(2)
    *   arr[0] = 5000
@@ -495,7 +495,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const ab = new ArrayBuffer(10)
    *   const buf = Buffer.from(ab, 0, 2)
@@ -505,7 +505,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const arrA = Uint8Array.from([0x63, 0x64, 0x65, 0x66]) // 4 elements
    *   const arrB = new Uint8Array(arrA.buffer, 1, 2) // 2 elements
@@ -525,7 +525,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf1 = Buffer.from('buffer')
    *   const buf2 = Buffer.from(buf1)
@@ -544,7 +544,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf1 = Buffer.from('buffer')
    *   const buf2 = Buffer.from(buf1.toJSON())
@@ -562,7 +562,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf1 = Buffer.from('this is a tést')
    *   const buf2 = Buffer.from('7468697320697320612074c3a97374', 'hex')
@@ -575,7 +575,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from(new String('this is a test'))
    *   console.log(buf.toString('hex')) // Prints: 7468697320697320612074657374
@@ -584,7 +584,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   class Foo {
    *     [Symbol.toPrimitive]() {
@@ -731,7 +731,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   console.log(Buffer.isBuffer(Buffer.alloc(10))) // true
    *   console.log(Buffer.isBuffer(Buffer.from('foo'))) // true
@@ -752,7 +752,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   console.log(Buffer.isEncoding('utf8')) // true
    *   console.log(Buffer.isEncoding('hex')) // true
@@ -794,7 +794,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   console.log(Buffer.packCalcSize('>bhl')) // Prints: 7
    *   console.log(Buffer.packCalcSize('>ci')) // Prints: 5
@@ -828,7 +828,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   console.log(Buffer.pack('>h', 1023).toString('hex')) // Prints: 03ff
    *   console.log(Buffer.pack('<h', 1023).toString('hex')) // Prints: ff03
@@ -848,7 +848,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf1 = Buffer.alloc(3)
    *   Buffer.pack(buf1, '>h', 0x0102)
@@ -893,7 +893,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf1 = Buffer.from('01fe01fe', 'hex')
    *   console.log(Buffer.unpack(buf1, '!BBbb')) // Prints: [1, 254, 1, -2]
@@ -925,7 +925,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf1 = Buffer.from('01fe01fe', 'hex')
    *   console.log([...Buffer.iterUnpack(buf1, '!BB')]) // Prints: [[1, 254], [1, 254]]
@@ -966,7 +966,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf1 = Buffer.from('ABC')
    *   const buf2 = Buffer.from('BCD')
@@ -985,7 +985,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf1 = Buffer.from([1, 2, 3, 4, 5, 6, 7, 8, 9])
    *   const buf2 = Buffer.from([5, 6, 7, 8, 9, 1, 2, 3, 4])
@@ -1028,7 +1028,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf1 = Buffer.allocUnsafe(26)
    *   const buf2 = Buffer.allocUnsafe(26).fill('!')
@@ -1048,7 +1048,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   // Create a `Buffer` and copy data from one region to an overlapping region within the same `Buffer`.
    *   const buf = Buffer.allocUnsafe(26)
@@ -1075,7 +1075,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf1 = Buffer.from('ABC')
    *   const buf2 = Buffer.from('414243', 'hex')
@@ -1107,7 +1107,7 @@ export class Buffer extends Uint8Array {
    *
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   // Fill a `Buffer` with the ASCII character 'h'.
    *   const b = Buffer.allocUnsafe(10).fill('h')
@@ -1123,7 +1123,7 @@ export class Buffer extends Uint8Array {
    *
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   // Fill a `Buffer` with character that takes up two bytes in UTF-8.
    *   const b = Buffer.allocUnsafe(5).fill('\u0222')
@@ -1135,7 +1135,7 @@ export class Buffer extends Uint8Array {
    *
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.allocUnsafe(5)
    *
@@ -1189,7 +1189,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from('this is a buffer')
    *   console.log(buf.includes('this')) // Prints: true
@@ -1258,7 +1258,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from('this is a buffer')
    *   console.log(buf.indexOf('this')) // Prints: 0
@@ -1276,7 +1276,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const b = Buffer.from('abcdef')
    *
@@ -1359,7 +1359,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from('this buffer is a buffer')
    *
@@ -1379,7 +1379,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const b = Buffer.from('abcdef')
    *
@@ -1451,7 +1451,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from('00000000ffffffff', 'hex')
    *   console.log(buf.readBigInt64BE(0)) // Prints: 4294967295n
@@ -1468,7 +1468,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from('00000000ffffffff', 'hex')
    *   console.log(buf.readBigInt64LE(0)) // Prints: -4294967296n
@@ -1485,7 +1485,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from('00000000ffffffff', 'hex')
    *   console.log(buf.readBigUInt64BE(0)) // Prints: 4294967295n
@@ -1508,7 +1508,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from('00000000ffffffff', 'hex')
    *   console.log(buf.readBigUInt64LE(0)) // Prints: 18446744069414584320n
@@ -1531,7 +1531,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from('0102030405060708', 'hex')
    *   console.log(buf.readDoubleBE(0)) // Prints: 8.20788039913184e-304
@@ -1548,7 +1548,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from('0102030405060708', 'hex')
    *   console.log(buf.readDoubleLE(0)) // Prints: 5.447603722011605e-270
@@ -1565,7 +1565,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from('01020304', 'hex')
    *   console.log(buf.readFloatBE(0)) // Prints: 2.387939260590663e-38
@@ -1582,7 +1582,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from('01020304', 'hex')
    *   console.log(buf.readFloatLE(0)) // Prints: 1.539989614439558e-36
@@ -1599,7 +1599,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from([-1, 5])
    *   console.log(buf.readInt8(0)) // Prints: -1
@@ -1617,7 +1617,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from([0, 5])
    *   console.log(buf.readInt16BE(0)) // Prints: 5
@@ -1634,7 +1634,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from([0, 5])
    *   console.log(buf.readInt16LE(0)) // Prints: 1280
@@ -1651,7 +1651,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from([0, 0, 0, 5])
    *   console.log(buf.readInt32BE(0)) // Prints: 5
@@ -1668,7 +1668,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from([0, 0, 0, 5])
    *   console.log(buf.readInt32LE(0)) // Prints: 83886080
@@ -1686,7 +1686,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from([0x12, 0x34, 0x56, 0x78, 0x90, 0xab])
    *   console.log(buf.readIntBE(0, 6).toString(16)) // Prints: 1234567890ab
@@ -1705,7 +1705,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from([0x12, 0x34, 0x56, 0x78, 0x90, 0xab])
    *   console.log(buf.readIntLE(0, 6).toString(16)) // Prints: -546f87a9cbee
@@ -1723,7 +1723,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from([1, -2])
    *   console.log(buf.readUInt8(0)) // Prints: 1
@@ -1747,7 +1747,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from([0x12, 0x34, 0x56])
    *   console.log(buf.readUInt16BE(0).toString(16)) // Prints: 1234
@@ -1771,7 +1771,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from([0x12, 0x34, 0x56])
    *   console.log(buf.readUInt16LE(0).toString(16)) // Prints: 3412
@@ -1795,7 +1795,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from([0x12, 0x34, 0x56, 0x78])
    *   console.log(buf.readUInt32BE(0).toString(16)) // Prints: 12345678
@@ -1818,7 +1818,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from([0x12, 0x34, 0x56, 0x78])
    *   console.log(buf.readUInt32LE(0).toString(16)) // Prints: 78563412
@@ -1842,7 +1842,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from([0x12, 0x34, 0x56, 0x78, 0x90, 0xab])
    *   console.log(buf.readUIntBE(0, 6).toString(16)) // Prints: 1234567890ab
@@ -1870,7 +1870,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from([0x12, 0x34, 0x56, 0x78, 0x90, 0xab])
    *   console.log(buf.readUIntLE(0, 6).toString(16)) // Prints: ab9078563412
@@ -1897,7 +1897,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   console.log(Buffer.from('0000', 'hex').readFloat16BE(0)) // Prints: 0
    *   console.log(Buffer.from('8000', 'hex').readFloat16BE(0)) // Prints: -0
@@ -1922,7 +1922,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   console.log(Buffer.from('0000', 'hex').readFloat16LE(0)) // Prints: 0
    *   console.log(Buffer.from('0080', 'hex').readFloat16LE(0)) // Prints: -0
@@ -1947,7 +1947,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from([0b10010110])
    *   const bits = new Array(8)
@@ -1967,7 +1967,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from([0b10010110])
    *   const bits = new Array(8)
@@ -1994,7 +1994,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf1 = Buffer.allocUnsafe(26)
    *   for (let i = 0; i < 26; i++) buf1[i] = i + 97
@@ -2009,7 +2009,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf1 = Buffer.allocUnsafe(26)
    *   for (let i = 0; i < 26; i++) buf1[i] = i + 97
@@ -2035,7 +2035,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf1 = Buffer.from('1020304050', 'hex')
    *   const buf2 = buf1.slice(1, 3)
@@ -2056,7 +2056,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf1 = Buffer.from('0102030405060708', 'hex')
    *   console.log(buf1.toString('hex')) // Prints: 0102030405060708
@@ -2081,7 +2081,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf1 = Buffer.from('0102030405060708', 'hex')
    *   console.log(buf1.toString('hex')) // Prints: 0102030405060708
@@ -2103,7 +2103,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf1 = Buffer.from('0102030405060708', 'hex')
    *   console.log(buf1.toString('hex')) // Prints: 0102030405060708
@@ -2124,7 +2124,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from('0102030405', 'hex')
    *   const json = JSON.stringify(buf)
@@ -2149,7 +2149,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf1 = Buffer.allocUnsafe(26)
    *   for (let i = 0; i < 26; i++) buf1[i] = i + 97 // 97 is the decimal ASCII value for 'a'.
@@ -2185,7 +2185,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf1 = Buffer.from('01020304', 'hex')
    *   const buf2 = buf1.reverse()
@@ -2297,7 +2297,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf1 = Buffer.alloc(256)
    *   const len1 = buf1.write('\u00bd + \u00bc = \u00be', 0)
@@ -2343,7 +2343,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = new Buffer(8)
    *   buf.writeBigInt64BE(0x0102030405060708n, 0)
@@ -2363,7 +2363,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = new Buffer(8)
    *   buf.writeBigInt64LE(0x0102030405060708n, 0)
@@ -2383,7 +2383,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = new Buffer(8)
    *   buf.writeBigUInt64BE(0xdecafafecacefaden, 0)
@@ -2409,7 +2409,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = new Buffer(8)
    *   buf.writeBigUInt64LE(0xdecafafecacefaden, 0)
@@ -2435,7 +2435,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = new Buffer(8)
    *   buf.writeDoubleBE(123.456, 0)
@@ -2455,7 +2455,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = new Buffer(8)
    *   buf.writeDoubleLE(123.456, 0)
@@ -2475,7 +2475,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = new Buffer(4)
    *   buf.writeFloatBE(123.456, 0)
@@ -2495,7 +2495,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = new Buffer(4)
    *   buf.writeFloatLE(123.456, 0)
@@ -2515,7 +2515,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = new Buffer(2)
    *   buf.writeFloat16BE(123.456, 0)
@@ -2536,7 +2536,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = new Buffer(2)
    *   buf.writeFloat16LE(123.456, 0)
@@ -2557,7 +2557,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = new Buffer(2)
    *   buf.writeInt8(2, 0)
@@ -2578,7 +2578,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = new Buffer(2)
    *   buf.writeInt16BE(0x0102, 0)
@@ -2598,7 +2598,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = new Buffer(2)
    *   buf.writeInt16LE(0x0102, 0)
@@ -2618,7 +2618,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = new Buffer(4)
    *   buf.writeInt32BE(0x01020304, 0)
@@ -2638,7 +2638,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = new Buffer(4)
    *   buf.writeInt32LE(0x01020304, 0)
@@ -2659,7 +2659,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = new Buffer(6)
    *   buf.writeIntBE(0x1234567890ab, 0, 6)
@@ -2682,7 +2682,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = new Buffer(6)
    *   buf.writeIntLE(0x1234567890ab, 0, 6)
@@ -2704,7 +2704,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = new Buffer(4)
    *   buf.writeUInt8(0x3, 0)
@@ -2733,7 +2733,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = new Buffer(4)
    *   buf.writeUInt16BE(0xdead, 0)
@@ -2760,7 +2760,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = new Buffer(4)
    *   buf.writeUInt16LE(0xdead, 0)
@@ -2787,7 +2787,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = new Buffer(4)
    *   buf.writeUInt32BE(0xfeedface, 0)
@@ -2813,7 +2813,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = new Buffer(4)
    *   buf.writeUInt32LE(0xfeedface, 0)
@@ -2840,7 +2840,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = new Buffer(6)
    *   buf.writeUIntBE(0x1234567890ab, 0, 6)
@@ -2872,7 +2872,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = new Buffer(6)
    *   buf.writeUIntLE(0x1234567890ab, 0, 6)
@@ -2903,7 +2903,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = new Buffer(1)
    *   const bits = [1, 0, 0, 1, 0, 1, 1, 0]
@@ -2926,7 +2926,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = new Buffer(1)
    *   const bits = [0, 1, 1, 0, 1, 0, 0, 1]
@@ -2949,7 +2949,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from('010203040506070809', 'hex')
    *   console.log(buf.chunk(4).map(chunk => chunk.toString('hex')))
@@ -2970,7 +2970,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from('010203040506070809', 'hex')
    *   console.log(buf.xor()) // Prints: 1
@@ -2991,7 +2991,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf1 = Buffer.alloc(3)
    *   buf1.pack('>h', 0x0102)
@@ -3015,7 +3015,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf1 = Buffer.from('01fe01fe', 'hex')
    *   console.log(buf1.unpack('!BBbb')) // Prints: [1, 254, 1, -2]
@@ -3033,7 +3033,7 @@ export class Buffer extends Uint8Array {
    * @example
    * ```js
    * ;(async function () {
-   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm')
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf1 = Buffer.from('01fe01fe', 'hex')
    *   console.log([...buf1.iterUnpack('!BB')]) // Prints: [[1, 254], [1, 254]]
