@@ -715,6 +715,7 @@ export class Buffer extends Uint8Array {
     if (!ArrayBuffer.isView(view)) throw new TypeError('invalid view')
     const bytesPerElement = (view as any)?.BYTES_PER_ELEMENT ?? 1
     const viewLength = view.byteLength / bytesPerElement
+    if (offset < 0) offset = offset % viewLength + viewLength
     if (_.isNil(length)) length = viewLength - offset
     return new Buffer(view.buffer, view.byteOffset + offset * bytesPerElement, length * bytesPerElement)
   }
@@ -1062,11 +1063,12 @@ export class Buffer extends Uint8Array {
    * })()
    * ```
    */
-  copy (target: Buffer, targetStart: number = 0, sourceStart: number = 0, sourceEnd: number = this.length): number {
-    let buf = this.subarray(sourceStart, sourceEnd)
-    if (buf.length > target.length - targetStart) buf = buf.subarray(0, target.length - targetStart)
-    target.set(buf, targetStart)
-    return buf.length
+  copy (target: ArrayBufferView, targetStart: number = 0, sourceStart: number = 0, sourceEnd: number = this.length): number {
+    const buf2 = (Buffer.isBuffer(target) ? target : Buffer.fromView(target)).subarray(targetStart)
+    let buf1 = this.subarray(sourceStart, sourceEnd)
+    if (buf1.length > buf2.length) buf1 = buf1.subarray(0, buf2.length)
+    buf2.set(buf1)
+    return buf1.length
   }
 
   /**
@@ -1500,7 +1502,7 @@ export class Buffer extends Uint8Array {
    * Alias of {@link Buffer.readBigUInt64BE}.
    * @group Method Aliases
    */
-  get readBigUint64BE (): Buffer['readBigUInt64BE'] { return this.readBigUInt64BE }
+  get readBigUint64BE (): this['readBigUInt64BE'] { return this.readBigUInt64BE }
 
   /**
    * Reads an unsigned, little-endian 64-bit integer from `buf` at the specified `offset`.
@@ -1523,7 +1525,7 @@ export class Buffer extends Uint8Array {
    * Alias of {@link Buffer.readBigUInt64LE}.
    * @group Method Aliases
    */
-  get readBigUint64LE (): Buffer['readBigUInt64LE'] { return this.readBigUInt64LE }
+  get readBigUint64LE (): this['readBigUInt64LE'] { return this.readBigUInt64LE }
 
   /**
    * Reads a 64-bit, big-endian double from `buf` at the specified `offset`.
@@ -1739,7 +1741,7 @@ export class Buffer extends Uint8Array {
    * Alias of {@link Buffer.readUInt8}.
    * @group Method Aliases
    */
-  get readUint8 (): Buffer['readUInt8'] { return this.readUInt8 }
+  get readUint8 (): this['readUInt8'] { return this.readUInt8 }
 
   /**
    * Reads an unsigned, big-endian 16-bit integer from `buf` at the specified `offset`.
@@ -1763,7 +1765,7 @@ export class Buffer extends Uint8Array {
    * Alias of {@link Buffer.readUInt16BE}.
    * @group Method Aliases
    */
-  get readUint16BE (): Buffer['readUInt16BE'] { return this.readUInt16BE }
+  get readUint16BE (): this['readUInt16BE'] { return this.readUInt16BE }
 
   /**
    * Reads an unsigned, little-endian 16-bit integer from `buf` at the specified `offset`.
@@ -1787,7 +1789,7 @@ export class Buffer extends Uint8Array {
    * Alias of {@link Buffer.readUInt16LE}.
    * @group Method Aliases
    */
-  get readUint16LE (): Buffer['readUInt16LE'] { return this.readUInt16LE }
+  get readUint16LE (): this['readUInt16LE'] { return this.readUInt16LE }
 
   /**
    * Reads an unsigned, big-endian 32-bit integer from `buf` at the specified `offset`.
@@ -1810,7 +1812,7 @@ export class Buffer extends Uint8Array {
    * Alias of {@link Buffer.readUInt32BE}.
    * @group Method Aliases
    */
-  get readUint32BE (): Buffer['readUInt32BE'] { return this.readUInt32BE }
+  get readUint32BE (): this['readUInt32BE'] { return this.readUInt32BE }
 
   /**
    * Reads an unsigned, little-endian 32-bit integer from `buf` at the specified `offset`.
@@ -1833,7 +1835,7 @@ export class Buffer extends Uint8Array {
    * Alias of {@link Buffer.readUInt32LE}.
    * @group Method Aliases
    */
-  get readUint32LE (): Buffer['readUInt32LE'] { return this.readUInt32LE }
+  get readUint32LE (): this['readUInt32LE'] { return this.readUInt32LE }
 
   /**
    * Reads `byteLength` number of bytes from `buf` at the specified `offset` and interprets the result as an unsigned big-endian integer supporting up to 48 bits of accuracy.
@@ -1861,7 +1863,7 @@ export class Buffer extends Uint8Array {
    * Alias of {@link Buffer.readUIntBE}.
    * @group Method Aliases
    */
-  get readUintBE (): Buffer['readUIntBE'] { return this.readUIntBE }
+  get readUintBE (): this['readUIntBE'] { return this.readUIntBE }
 
   /**
    * Reads `byteLength` number of bytes from `buf` at the specified `offset` and interprets the result as an unsigned big-endian integer supporting up to 48 bits of accuracy.
@@ -1889,7 +1891,7 @@ export class Buffer extends Uint8Array {
    * Alias of {@link Buffer.readUIntLE}.
    * @group Method Aliases
    */
-  get readUintLE (): Buffer['readUIntLE'] { return this.readUIntLE }
+  get readUintLE (): this['readUIntLE'] { return this.readUIntLE }
 
   /**
    * Reads a 16-bit, big-endian float from `buf` at the specified `offset`.
@@ -2400,7 +2402,7 @@ export class Buffer extends Uint8Array {
    * Alias of {@link Buffer.writeBigUInt64BE}.
    * @group Method Aliases
    */
-  get writeBigUint64BE (): Buffer['writeBigUInt64BE'] { return this.writeBigUInt64BE }
+  get writeBigUint64BE (): this['writeBigUInt64BE'] { return this.writeBigUInt64BE }
 
   /**
    * Writes `value` to `buf` at the specified `offset` as little-endian.
@@ -2426,7 +2428,7 @@ export class Buffer extends Uint8Array {
    * Alias of {@link Buffer.writeBigUInt64LE}.
    * @group Method Aliases
    */
-  get writeBigUint64LE (): Buffer['writeBigUInt64LE'] { return this.writeBigUInt64LE }
+  get writeBigUint64LE (): this['writeBigUInt64LE'] { return this.writeBigUInt64LE }
 
   /**
    * Writes `value` to `buf` at the specified `offset` as big-endian. The `value` must be a JavaScript number. Behavior is undefined when `value` is anything other than a JavaScript number.
@@ -2724,7 +2726,7 @@ export class Buffer extends Uint8Array {
    * Alias of {@link Buffer.writeUInt8}.
    * @group Method Aliases
    */
-  get writeUint8 (): Buffer['writeUInt8'] { return this.writeUInt8 }
+  get writeUint8 (): this['writeUInt8'] { return this.writeUInt8 }
 
   /**
    * Writes `value` to `buf` at the specified `offset` as big-endian. The `value` must be a valid unsigned 16-bit integer. Behavior is undefined when `value` is anything other than an unsigned 16-bit integer.
@@ -2751,7 +2753,7 @@ export class Buffer extends Uint8Array {
    * Alias of {@link Buffer.writeUInt16BE}.
    * @group Method Aliases
    */
-  get writeUint16BE (): Buffer['writeUInt16BE'] { return this.writeUInt16BE }
+  get writeUint16BE (): this['writeUInt16BE'] { return this.writeUInt16BE }
 
   /**
    * Writes `value` to `buf` at the specified `offset` as little-endian. The `value` must be a valid unsigned 16-bit integer. Behavior is undefined when `value` is anything other than an unsigned 16-bit integer.
@@ -2778,7 +2780,7 @@ export class Buffer extends Uint8Array {
    * Alias of {@link Buffer.writeUInt16LE}.
    * @group Method Aliases
    */
-  get writeUint16LE (): Buffer['writeUInt16LE'] { return this.writeUInt16LE }
+  get writeUint16LE (): this['writeUInt16LE'] { return this.writeUInt16LE }
 
   /**
    * Writes `value` to `buf` at the specified `offset` as big-endian. The `value` must be a valid unsigned 32-bit integer. Behavior is undefined when `value` is anything other than an unsigned 32-bit integer.
@@ -2804,7 +2806,7 @@ export class Buffer extends Uint8Array {
    * Alias of {@link Buffer.writeUInt32BE}.
    * @group Method Aliases
    */
-  get writeUint32BE (): Buffer['writeUInt32BE'] { return this.writeUInt32BE }
+  get writeUint32BE (): this['writeUInt32BE'] { return this.writeUInt32BE }
 
   /**
    * Writes `value` to `buf` at the specified `offset` as little-endian. The `value` must be a valid unsigned 32-bit integer. Behavior is undefined when `value` is anything other than an unsigned 32-bit integer.
@@ -2830,7 +2832,7 @@ export class Buffer extends Uint8Array {
    * Alias of {@link Buffer.writeUInt32LE}.
    * @group Method Aliases
    */
-  get writeUint32LE (): Buffer['writeUInt32LE'] { return this.writeUInt32LE }
+  get writeUint32LE (): this['writeUInt32LE'] { return this.writeUInt32LE }
 
   /**
    * Writes `byteLength` bytes of `value` to `buf` at the specified `offset` as big-endian. Supports up to 48 bits of accuracy. Behavior is undefined when `value` is anything other than an unsigned integer.
@@ -2862,7 +2864,7 @@ export class Buffer extends Uint8Array {
    * Alias of {@link Buffer.writeUIntBE}.
    * @group Method Aliases
    */
-  get writeUintBE (): Buffer['writeUIntBE'] { return this.writeUIntBE }
+  get writeUintBE (): this['writeUIntBE'] { return this.writeUIntBE }
 
   /**
    * Writes `byteLength` bytes of `value` to `buf` at the specified `offset` as little-endian. Supports up to 48 bits of accuracy. Behavior is undefined when `value` is anything other than an unsigned integer.
@@ -2894,7 +2896,7 @@ export class Buffer extends Uint8Array {
    * Alias of {@link Buffer.writeUIntLE}.
    * @group Method Aliases
    */
-  get writeUintLE (): Buffer['writeUIntLE'] { return this.writeUIntLE }
+  get writeUintLE (): this['writeUIntLE'] { return this.writeUIntLE }
 
   /**
    * Treats `buf` as a [most-significant bit](https://en.wikipedia.org/wiki/Most_significant_bit) array and write a bit at the specified bit offset.
@@ -3336,7 +3338,7 @@ enum Encoding {
   latin1 = 'latin1',
   ucs2 = 'ucs2',
   utf16le = 'utf16le',
-  utf8 = 'utf8'
+  utf8 = 'utf8',
 }
 type KeyOfEncoding = keyof typeof Encoding
 

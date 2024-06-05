@@ -6,16 +6,14 @@ module.exports = {
   plugins: ['eslint-plugin-tsdoc'],
   extends: ['love'],
   rules: {
-    '@typescript-eslint/no-unsafe-argument': 0, // 0 = off, 1 = warn, 2 = error
-    '@typescript-eslint/non-nullable-type-assertion-style': 0, // 0 = off, 1 = warn, 2 = error
-    '@typescript-eslint/return-await': 0, // 0 = off, 1 = warn, 2 = error
-    '@typescript-eslint/strict-boolean-expressions': 0, // 0 = off, 1 = warn, 2 = error
-    '@typescript-eslint/unbound-method': 0, // 0 = off, 1 = warn, 2 = error
-    'multiline-ternary': 0, // 0 = off, 1 = warn, 2 = error
-    'no-return-await': 0, // 0 = off, 1 = warn, 2 = error
-    'tsdoc/syntax': ['warn', {
-      ignoreUndefinedTags: true,
-    }], // 0 = off, 1 = warn, 2 = error
+    '@typescript-eslint/no-unsafe-argument': 'off',
+    '@typescript-eslint/non-nullable-type-assertion-style': 'off',
+    '@typescript-eslint/return-await': 'off',
+    '@typescript-eslint/strict-boolean-expressions': 'off',
+    '@typescript-eslint/unbound-method': 'off',
+    'multiline-ternary': 'off',
+    'no-return-await': 'off',
+    'tsdoc/syntax': 'warn',
     'comma-dangle': ['error', {
       arrays: 'always-multiline',
       objects: 'always-multiline',
@@ -25,9 +23,12 @@ module.exports = {
     }],
     '@typescript-eslint/comma-dangle': ['error', {
       arrays: 'always-multiline',
-      objects: 'always-multiline',
-      imports: 'always-multiline',
+      enums: 'always-multiline',
       exports: 'always-multiline',
+      generics: 'always-multiline',
+      imports: 'always-multiline',
+      objects: 'always-multiline',
+      tuples: 'always-multiline',
       functions: 'only-multiline',
     }],
   },

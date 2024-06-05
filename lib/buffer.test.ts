@@ -181,6 +181,12 @@ describe('Buffer.from()', () => {
       expect(err.message).toMatch(/type of value/)
     }
   })
+
+  test('should create a zero-length Buffer from DataView', () => {
+    const dv = new DataView(new Uint8Array([1, 2, 3]).buffer)
+    const actual = Buffer.from(dv as any)
+    expect(actual.toString('hex')).toEqual('')
+  })
 })
 
 describe('Buffer.copyBytesFrom()', () => {
@@ -203,6 +209,12 @@ describe('Buffer.copyBytesFrom()', () => {
     const actual = Buffer.copyBytesFrom(u16, 1, 1)
     u16[1] = 0
     expect(actual.toString('hex')).toEqual('ffff')
+  })
+
+  test('DataView', () => {
+    const dv = new DataView(new Uint8Array([1, 2, 3]).buffer)
+    const actual = Buffer.copyBytesFrom(dv)
+    expect(actual.toString('hex')).toEqual('010203')
   })
 })
 
@@ -229,12 +241,22 @@ test.each([
 
 describe('Buffer.fromView()', () => {
   test('with TypedArray', () => {
-    const view1 = new Uint8Array([0, 1, 2, 3, 4]).subarray(1, 4)
-    const actual1 = Buffer.fromView(view1)
+    const view1 = new Uint8Array([0, 1, 2, 3, 4])
+    const actual1 = Buffer.fromView(view1, 1, 3)
     expect(actual1.toString('hex')).toEqual('010203')
 
     const view2 = new Uint16Array([0x1212, 0x3434, 0x5656])
     const actual2 = Buffer.fromView(view2, 1, 1)
+    expect(actual2.toString('hex')).toEqual('3434')
+  })
+
+  test('with negative offset', () => {
+    const view1 = new Uint8Array([0, 1, 2, 3, 4])
+    const actual1 = Buffer.fromView(view1, -4, 3)
+    expect(actual1.toString('hex')).toEqual('010203')
+
+    const view2 = new Uint16Array([0x1212, 0x3434, 0x5656])
+    const actual2 = Buffer.fromView(view2, -2, 1)
     expect(actual2.toString('hex')).toEqual('3434')
   })
 
@@ -290,6 +312,17 @@ describe('Buffer#copy()', () => {
     expect(buf2.toString('ascii', 0, 25)).toEqual('!!!!!!!!qrst!!!!!!!!!!!!!')
   })
 
+  test('should copy bytes from buf1 to buf2 with negative offsets', () => {
+    const buf1 = Buffer.allocUnsafe(26)
+    const buf2 = Buffer.allocUnsafe(26).fill('!')
+
+    // 97 is the decimal ASCII value for 'a'.
+    for (let i = 0; i < 26; i++) buf1[i] = i + 97
+
+    buf1.copy(buf2, -18, -10, -6)
+    expect(buf2.toString('ascii', 0, 25)).toEqual('!!!!!!!!qrst!!!!!!!!!!!!!')
+  })
+
   test('shoud copy bytes from one region to an overlapping region within the same Buffer', () => {
     const buf = Buffer.allocUnsafe(26)
 
@@ -298,6 +331,23 @@ describe('Buffer#copy()', () => {
 
     buf.copy(buf, 0, 4, 10)
     expect(buf.toString()).toEqual('efghijghijklmnopqrstuvwxyz')
+  })
+
+  test('should copy bytes to Uint8Array target', () => {
+    const buf1 = Buffer.from('abc')
+    const u8arr = new Uint8Array(3)
+
+    expect(buf1.copy(u8arr)).toEqual(3)
+    expect([...u8arr]).toEqual([97, 98, 99])
+  })
+
+  test('should copy bytes to DataView target', () => {
+    const buf1 = Buffer.from('abc')
+    const u8arr = new Uint8Array(3)
+    const dv = new DataView(u8arr.buffer)
+
+    expect(buf1.copy(dv)).toEqual(3)
+    expect([...u8arr]).toEqual([97, 98, 99])
   })
 })
 
