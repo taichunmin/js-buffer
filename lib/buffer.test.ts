@@ -1485,6 +1485,13 @@ describe('Buffer#slice()', () => {
 test('Buffer#reverse()', () => {
   const buf1 = Buffer.from('123')
   const buf2 = buf1.reverse()
+  expect(buf1.toString()).toEqual('321')
+  expect(buf1).toBe(buf2)
+})
+
+test('Buffer#toReversed()', () => {
+  const buf1 = Buffer.from('123')
+  const buf2 = buf1.toReversed()
   expect(buf1.toString()).toEqual('123')
   expect(buf2.toString()).toEqual('321')
 })
@@ -1801,4 +1808,43 @@ describe('function alias test', () => {
     const buf = new Buffer()
     expect(buf[a as any]).toBe(buf[b as any])
   })
+})
+
+describe('Buffer#sort()', () => {
+  test('without compareFn', () => {
+    const buf1 = Buffer.from('4010502030', 'hex')
+    const buf2 = buf1.sort()
+    expect(buf2.toString('hex')).toEqual('1020304050')
+    expect(buf1).toBe(buf2)
+  })
+
+  test('with compareFn', () => {
+    const buf1 = Buffer.from('4010502030', 'hex')
+    const buf2 = buf1.sort((a, b) => b - a)
+    expect(buf2.toString('hex')).toEqual('5040302010')
+    expect(buf1).toBe(buf2)
+  })
+})
+
+describe('Buffer#toSorted()', () => {
+  test('without compareFn', () => {
+    const buf1 = Buffer.from('4010502030', 'hex')
+    const buf2 = buf1.toSorted()
+    expect(buf1.toString('hex')).toEqual('4010502030')
+    expect(buf2.toString('hex')).toEqual('1020304050')
+  })
+
+  test('with compareFn', () => {
+    const buf1 = Buffer.from('4010502030', 'hex')
+    const buf2 = buf1.toSorted((a, b) => b - a)
+    expect(buf1.toString('hex')).toEqual('4010502030')
+    expect(buf2.toString('hex')).toEqual('5040302010')
+  })
+})
+
+test('Buffer#with()', () => {
+  const buf1 = Buffer.from('0102030405', 'hex')
+  const buf2 = buf1.with(2, 6)
+  expect(buf1.toString('hex')).toEqual('0102030405')
+  expect(buf2.toString('hex')).toEqual('0102060405')
 })

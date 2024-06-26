@@ -85,11 +85,12 @@ jobs:
         uses: egad13/purge-jsdelivr-cache@v1
         with:
           url: |
-            https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.global.js
-            https://cdn.jsdelivr.net/npm/@taichunmin/buffer/dist/buffer.global.js
-            https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.global.min.js
-            https://cdn.jsdelivr.net/npm/@taichunmin/buffer/dist/buffer.global.min.js
-            https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm
-            https://cdn.jsdelivr.net/npm/@taichunmin/buffer/dist/buffer.mjs/+esm
+            https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0
             https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm
+            https://cdn.jsdelivr.net/npm/@taichunmin/buffer
             https://cdn.jsdelivr.net/npm/@taichunmin/buffer/+esm
+
+            https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.global.js
+            https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm
+            https://cdn.jsdelivr.net/npm/@taichunmin/buffer/dist/buffer.global.js
+            https://cdn.jsdelivr.net/npm/@taichunmin/buffer/dist/buffer.mjs/+esm

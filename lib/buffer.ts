@@ -723,6 +723,7 @@ export class Buffer extends Uint8Array {
   /**
    * A helper function which `Buffer.isBuffer()` will invoke and determine whether `this` is a `Buffer` or not.
    * @returns `true` if `this` is a `Buffer`, `false` otherwise.
+   * @hidden
    */
   [customBufferSymbol] (): boolean { return true }
 
@@ -2175,6 +2176,7 @@ export class Buffer extends Uint8Array {
   /**
    * Custom inspect functions which `util.inspect()` will invoke and use the result of when inspecting the object.
    * @returns a string representation of `buf`.
+   * @hidden
    */
   [customInspectSymbol] (): string {
     const tmp = this.subarray(0, INSPECT_MAX_BYTES).toString('hex').match(/.{2}/g) as string[]
@@ -2183,7 +2185,26 @@ export class Buffer extends Uint8Array {
   }
 
   /**
-   * Creates a new `Buffer` which is reverse of the original `buf`.
+   * The method reverses a `Buffer` in place and returns the reference to the same `Buffer`, the first element now becoming the last, and the last element becoming the first. In other words, elements order in the `Buffer` will be turned towards the direction opposite to that previously stated.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf1 = Buffer.from('01020304', 'hex')
+   *   buf1.reverse()
+   *   console.log(buf1.toString('hex')) // Prints: 04030201
+   * })()
+   * ```
+   */
+  reverse (): this {
+    super.reverse()
+    return this
+  }
+
+  /**
+   * The method is the copying counterpart of the `reverse()` method. It returns a new `Buffer` with the elements in reversed order.
+   * @returns A new `Buffer` containing the elements in reversed order.
    * @example
    * ```js
    * ;(async function () {
@@ -2196,10 +2217,8 @@ export class Buffer extends Uint8Array {
    * })()
    * ```
    */
-  reverse (): Buffer {
-    const buf = new Buffer(this.length)
-    for (let i = buf.length - 1; i >= 0; i--) buf[i] = this[this.length - i - 1]
-    return buf
+  toReversed (): Buffer {
+    return new Buffer(super.slice().reverse().buffer)
   }
 
   /**
@@ -3044,6 +3063,86 @@ export class Buffer extends Uint8Array {
    */
   * iterUnpack <T extends any[]> (format: string): Generator<T> {
     yield * Buffer.iterUnpack<T>(this, format)
+  }
+
+  /**
+   * The method sorts the elements of a `Buffer` in place and returns the reference to the same `Buffer`, now sorted.
+   * @param compareFn - A function that determines the order of the elements. The function is called with the following arguments:
+   * - `a`: The first element for comparison.
+   * - `b`: The second element for comparison.
+   * It should return a number where:
+   * - A negative value indicates that `a` should come before `b`.
+   * - A positive value indicates that `a` should come after `b`.
+   * - Zero or `NaN` indicates that `a` and `b` are considered equal.
+   * To memorize this, remember that `(a, b) => a - b` sorts numbers in ascending order. If omitted, the elements are sorted according to numeric value.
+   * @returns The reference to the original `Buffer`, now sorted. Note that the `Buffer` is sorted in place, and no copy is made.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf1 = Buffer.from('03010204', 'hex')
+   *   buf1.sort()
+   *   console.log(buf1.toString('hex')) // Prints: 01020304
+   *
+   *   buf1.sort((a, b) => b - a)
+   *   console.log(buf1.toString('hex')) // Prints: 04030201
+   * })()
+   * ```
+   */
+  sort (compareFn?: (a: number, b: number) => any): this {
+    super.sort(compareFn)
+    return this
+  }
+
+  /**
+   * The method is the copying version of the `sort()` method. It returns a new `Buffer` with the elements sorted in ascending order.
+   * @param compareFn - A function that determines the order of the elements. The function is called with the following arguments:
+   * - `a`: The first element for comparison.
+   * - `b`: The second element for comparison.
+   * It should return a number where:
+   * - A negative value indicates that `a` should come before `b`.
+   * - A positive value indicates that `a` should come after `b`.
+   * - Zero or `NaN` indicates that `a` and `b` are considered equal.
+   * To memorize this, remember that `(a, b) => a - b` sorts numbers in ascending order. If omitted, the elements are sorted according to numeric value.
+   * @returns A new `Buffer` with the elements sorted in ascending order.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf1 = Buffer.from('03010204', 'hex')
+   *   const buf2 = buf1.toSorted()
+   *   console.log(buf1.toString('hex')) // Prints: 03010204
+   *   console.log(buf2.toString('hex')) // Prints: 01020304
+   * })()
+   * ```
+   */
+  toSorted (compareFn?: (a: number, b: number) => any): Buffer {
+    return new Buffer(super.slice().sort(compareFn).buffer)
+  }
+
+  /**
+   * The method is the copying version of using the bracket notation to change the value of a given index. It returns a new `Buffer` with the element at the given index replaced with the given value.
+   * @param index - Zero-based index at which to change the `Buffer`, converted to an integer.
+   * @param value - Any value to be assigned to the given index.
+   * @returns A new `Buffer` with the element at index replaced with value.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf1 = Buffer.from('0102030405', 'hex')
+   *   const buf2 = buf1.with(2, 6)
+   *   console.log(buf1.toString('hex')) // Prints: 0102030405
+   *   console.log(buf2.toString('hex')) // Prints: 0102060405
+   * })()
+   * ```
+   */
+  with (index: number, value: number): Buffer {
+    const buf = new Buffer(super.slice().buffer)
+    buf[index] = value
+    return buf
   }
 }
 
