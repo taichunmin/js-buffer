@@ -1,6 +1,8 @@
 import _ from 'lodash'
 import { type Uint8Array } from './Uint8Array'
 
+const cachedDecoders: Record<string, TextDecoder> = {}
+const cachedEncoders: Record<string, TextEncoder> = {}
 const customBufferSymbol = Symbol.for('taichunmin.buffer')
 const customInspectSymbol = Symbol.for('nodejs.util.inspect.custom')
 const float16Buf = new DataView(new ArrayBuffer(4))
@@ -320,7 +322,8 @@ export class Buffer extends Uint8Array {
     if (_.includes(['ucs2', 'ucs-2', 'utf16le', 'utf-16le'], encoding)) return value.length * 2
     if (encoding === 'hex') return value.length >>> 1
     if (_.includes(['base64', 'base64url'], encoding)) return (value.replace(/[^A-Za-z0-9/_+-]/g, '').length * 3) >>> 2
-    return new TextEncoder().encode(value).length // default utf8
+    cachedEncoders.utf8 ??= new TextEncoder()
+    return cachedEncoders.utf8.encode(value).length // default utf8
   }
 
   /**
@@ -699,7 +702,8 @@ export class Buffer extends Uint8Array {
    * @group Static Methods
    */
   static fromUtf8String (utf8: string): Buffer {
-    return Buffer.fromView(new TextEncoder().encode(utf8))
+    cachedEncoders.utf8 ??= new TextEncoder()
+    return Buffer.fromView(cachedEncoders.utf8.encode(utf8))
   }
 
   /**
@@ -1064,9 +1068,10 @@ export class Buffer extends Uint8Array {
     target = target.subarray(targetStart, targetEnd)
     const len = Math.min(me.length, target.length)
     for (let i = 0; i < len; i++) {
-      if (me[i] !== target[i]) return me[i] < target[i] ? -1 : 1
+      const diff = me[i] - target[i]
+      if (diff !== 0) return Math.sign(diff)
     }
-    return me.length === target.length ? 0 : (me.length < target.length ? -1 : 1)
+    return Math.sign(me.length - target.length)
   }
 
   /**
@@ -1904,11 +1909,24 @@ export class Buffer extends Uint8Array {
    * ```
    */
   readUIntBE (offset: number = 0, byteLength: number = 6): number {
-    if (byteLength < 1 || byteLength > 6) throw new RangeError(`Invalid byteLength: ${byteLength}`)
     if (offset + byteLength > this.length) throw new RangeError(`Invalid offset: ${offset}`)
-    let tmp = 0
-    for (let i = 0; i < byteLength; i++) tmp = tmp * 0x100 + this[offset + i]
-    return tmp
+
+    switch (byteLength) {
+      case 1:
+        return this[offset]
+      case 2:
+        return this.readUInt16BE(offset)
+      case 3:
+        return this.readUInt16BE(offset) * 0x100 + this[offset + 2]
+      case 4:
+        return this.readUInt32BE(offset)
+      case 5:
+        return this.readUInt32BE(offset) * 0x100 + this[offset + 4]
+      case 6:
+        return this.readUInt32BE(offset) * 0x10000 + this.readUInt16BE(offset + 4)
+      default:
+        throw new Error(`Invalid byteLength: ${byteLength}`)
+    }
   }
 
   /**
@@ -1932,11 +1950,24 @@ export class Buffer extends Uint8Array {
    * ```
    */
   readUIntLE (offset: number = 0, byteLength: number = 6): number {
-    if (byteLength < 1 || byteLength > 6) throw new RangeError(`Invalid byteLength: ${byteLength}`)
     if (offset + byteLength > this.length) throw new RangeError(`Invalid offset: ${offset}`)
-    let tmp = 0
-    for (let i = byteLength - 1; i >= 0; i--) tmp = tmp * 0x100 + this[offset + i]
-    return tmp
+
+    switch (byteLength) {
+      case 1:
+        return this[offset]
+      case 2:
+        return this.readUInt16LE(offset)
+      case 3:
+        return this[offset] + this.readUInt16LE(offset + 1) * 0x100
+      case 4:
+        return this.readUInt32LE(offset)
+      case 5:
+        return this[offset] + this.readUInt32LE(offset + 1) * 0x100
+      case 6:
+        return this.readUInt16LE(offset) + this.readUInt32LE(offset + 2) * 0x10000
+      default:
+        throw new Error(`Invalid byteLength: ${byteLength}`)
+    }
   }
 
   /**
@@ -2278,7 +2309,8 @@ export class Buffer extends Uint8Array {
    * @group Static Methods
    */
   static toUcs2String (buf: Buffer): string {
-    return new TextDecoder('utf-16le').decode(buf)
+    cachedDecoders['utf-16le'] ??= new TextDecoder('utf-16le')
+    return cachedDecoders['utf-16le'].decode(buf)
   }
 
   /**
@@ -2288,7 +2320,8 @@ export class Buffer extends Uint8Array {
    * @group Static Methods
    */
   static toUtf8String (buf: Buffer): string {
-    return new TextDecoder().decode(buf)
+    cachedDecoders.utf8 ??= new TextDecoder()
+    return cachedDecoders.utf8.decode(buf)
   }
 
   /**
@@ -2921,11 +2954,32 @@ export class Buffer extends Uint8Array {
    * ```
    */
   writeUIntBE (val: number, offset: number = 0, byteLength: number = 6): this {
-    if (byteLength < 1 || byteLength > 6) throw new RangeError(`Invalid byteLength: ${byteLength}`)
     if (offset + byteLength > this.length) throw new RangeError(`Invalid offset: ${offset}`)
-    for (let i = byteLength - 1; i >= 0; i--) {
-      this[offset + i] = val & 0xFF
-      val /= 0x100
+
+    switch (byteLength) {
+      case 1:
+        this[offset] = val
+        break
+      case 2:
+        this.writeUInt16BE(val, offset)
+        break
+      case 3:
+        this.writeUInt16BE(val / 0x100, offset)
+        this[offset + 2] = val
+        break
+      case 4:
+        this.writeUInt32BE(val, offset)
+        break
+      case 5:
+        this.writeUInt32BE(val / 0x100, offset)
+        this[offset + 4] = val
+        break
+      case 6:
+        this.writeUInt32BE(val / 0x10000, offset)
+        this.writeUInt16BE(val, offset + 4)
+        break
+      default:
+        throw new RangeError(`Invalid byteLength: ${byteLength}`)
     }
     return this
   }
@@ -2953,11 +3007,32 @@ export class Buffer extends Uint8Array {
    * ```
    */
   writeUIntLE (val: number, offset: number = 0, byteLength: number = 6): this {
-    if (byteLength < 1 || byteLength > 6) throw new RangeError(`Invalid byteLength: ${byteLength}`)
     if (offset + byteLength > this.length) throw new RangeError(`Invalid offset: ${offset}`)
-    for (let i = 0; i < byteLength; i++) {
-      this[offset + i] = val & 0xFF
-      val /= 0x100
+
+    switch (byteLength) {
+      case 1:
+        this[offset] = val
+        break
+      case 2:
+        this.writeUInt16LE(val, offset)
+        break
+      case 3:
+        this[offset] = val
+        this.writeUInt16LE(val / 0x100, offset + 1)
+        break
+      case 4:
+        this.writeUInt32LE(val, offset)
+        break
+      case 5:
+        this[offset] = val
+        this.writeUInt32LE(val / 0x100, offset + 1)
+        break
+      case 6:
+        this.writeUInt16LE(val, offset)
+        this.writeUInt32LE(val / 0x10000, offset + 2)
+        break
+      default:
+        throw new RangeError(`Invalid byteLength: ${byteLength}`)
     }
     return this
   }

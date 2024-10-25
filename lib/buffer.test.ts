@@ -759,6 +759,18 @@ describe('Buffer#readUIntBE', () => {
     expect(actual).toEqual(expected)
   })
 
+  test.each([
+    [1, 0x01],
+    [2, 0x0102],
+    [3, 0x010203],
+    [4, 0x01020304],
+    [5, 0x0102030405],
+    [6, 0x010203040506],
+  ])('should work with byteLength = %j', (byteLength, expected) => {
+    const actual = Buffer.from('010203040506', 'hex').readUIntBE(0, byteLength)
+    expect(actual).toEqual(expected)
+  })
+
   test('should work with 0 or 1 arguments', () => {
     const actual = new Buffer(7)
     expect(actual.readUIntBE()).toEqual(0)
@@ -768,7 +780,7 @@ describe('Buffer#readUIntBE', () => {
   test.each([0, 7])('should throw error with invalid byteLength = %j', byteLength => {
     expect.hasAssertions()
     try {
-      new Buffer().readUIntBE(0, byteLength)
+      new Buffer(7).readUIntBE(0, byteLength)
     } catch (err) {
       expect(err.message).toMatch(/Invalid byteLength/)
     }
@@ -795,6 +807,18 @@ describe('Buffer#readUIntLE', () => {
     expect(actual).toEqual(expected)
   })
 
+  test.each([
+    [1, 0x01],
+    [2, 0x0201],
+    [3, 0x030201],
+    [4, 0x04030201],
+    [5, 0x0504030201],
+    [6, 0x060504030201],
+  ])('should work with byteLength = %j', (byteLength, expected) => {
+    const actual = Buffer.from('010203040506', 'hex').readUIntLE(0, byteLength)
+    expect(actual).toEqual(expected)
+  })
+
   test('should work with 0 or 1 arguments', () => {
     const actual = new Buffer(7)
     expect(actual.readUIntLE()).toEqual(0)
@@ -804,7 +828,7 @@ describe('Buffer#readUIntLE', () => {
   test.each([0, 7])('should throw error with invalid byteLength = %j', byteLength => {
     expect.hasAssertions()
     try {
-      new Buffer().readUIntLE(0, byteLength)
+      new Buffer(7).readUIntLE(0, byteLength)
     } catch (err) {
       expect(err.message).toMatch(/Invalid byteLength/)
     }

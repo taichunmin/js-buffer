@@ -136,6 +136,7 @@ out
 *.xml
 /.eslintrc.*
 /*.config.js
+/benchmark
 /dist/assets
 /tsconfig.json
 /tsdoc.json
