@@ -722,11 +722,6 @@ describe('Buffer#chunk()', () => {
   })
 })
 
-test('Buffer#xor()', () => {
-  const actual = Buffer.from('01020304', 'hex').xor()
-  expect(actual).toEqual(0x04)
-})
-
 describe('Buffer#toString()', () => {
   test('Buffer#toString(\'hex\')', () => {
     const actual = Buffer.from([0, 1, 2])
@@ -1773,6 +1768,11 @@ test('Buffer.packCalcSize()', () => {
 })
 
 describe('util.inspect()', () => {
+  test('util.inpect() with empty buffer', () => {
+    const actual = util.inspect(new Buffer())
+    expect(actual).toBe('<Buffer >')
+  })
+
   test('util.inpect() with short buffer', () => {
     const actual = util.inspect(Buffer.from('1122334455', 'hex'))
     expect(actual).toBe('<Buffer 11 22 33 44 55>')
@@ -1847,4 +1847,86 @@ test('Buffer#with()', () => {
   const buf2 = buf1.with(2, 6)
   expect(buf1.toString('hex')).toEqual('0102030405')
   expect(buf2.toString('hex')).toEqual('0102060405')
+})
+
+test('Buffer#not()', () => {
+  const buf = Buffer.from('00010203', 'hex')
+  buf.not()
+  expect(buf.toString('hex')).toEqual('fffefdfc')
+})
+
+test('Buffer#toNoted()', () => {
+  const buf1 = Buffer.from('00010203', 'hex')
+  const buf2 = buf1.toNoted()
+  expect(buf1.toString('hex')).toEqual('00010203')
+  expect(buf2.toString('hex')).toEqual('fffefdfc')
+})
+
+test('Buffer#or()', () => {
+  const buf = Buffer.from('010203040506070809', 'hex')
+  expect(buf.or()).toEqual(15)
+  expect(new Buffer().or()).toEqual(0)
+})
+
+test('Buffer#or(buf)', () => {
+  const buf1 = Buffer.from('010203', 'hex')
+  const buf2 = Buffer.from('102030', 'hex')
+  buf1.or(buf2)
+  expect(buf1.toString('hex')).toEqual('112233')
+  expect(buf2.toString('hex')).toEqual('102030')
+})
+
+test('Buffer#toOred()', () => {
+  const buf1 = Buffer.from('010203', 'hex')
+  const buf2 = Buffer.from('102030', 'hex')
+  const buf3 = buf1.toOred(buf2)
+  expect(buf1.toString('hex')).toEqual('010203')
+  expect(buf2.toString('hex')).toEqual('102030')
+  expect(buf3.toString('hex')).toEqual('112233')
+})
+
+test('Buffer#and()', () => {
+  const buf = Buffer.from('0103050709', 'hex')
+  expect(buf.and()).toEqual(1)
+  expect(new Buffer().and()).toEqual(0xFF)
+})
+
+test('Buffer#and(buf)', () => {
+  const buf1 = Buffer.from('010203FF', 'hex')
+  const buf2 = Buffer.from('102030FF', 'hex')
+  buf1.and(buf2)
+  expect(buf1.toString('hex')).toEqual('000000ff')
+  expect(buf2.toString('hex')).toEqual('102030ff')
+})
+
+test('Buffer#toAnded()', () => {
+  const buf1 = Buffer.from('010203ff', 'hex')
+  const buf2 = Buffer.from('102030ff', 'hex')
+  const buf3 = buf1.toAnded(buf2)
+  expect(buf1.toString('hex')).toEqual('010203ff')
+  expect(buf2.toString('hex')).toEqual('102030ff')
+  expect(buf3.toString('hex')).toEqual('000000ff')
+})
+
+test('Buffer#xor()', () => {
+  const buf = Buffer.from('01020304', 'hex')
+  expect(buf.xor()).toEqual(0x04)
+  expect(new Buffer().xor()).toEqual(0)
+})
+
+test('Buffer#xor(buf)', () => {
+  const buf1 = Buffer.from('010203', 'hex')
+  const buf2 = Buffer.from('102030', 'hex')
+  buf1.xor(buf2)
+  expect(buf1.toString('hex')).toEqual('112233')
+  expect(buf2.toString('hex')).toEqual('102030')
+})
+
+test('Buffer#toXored()', () => {
+  const buf1 = Buffer.from('010203', 'hex')
+  const buf2 = Buffer.from('102030', 'hex')
+  const buf3 = buf1.toXored(buf2)
+  expect(buf1.toString('hex')).toEqual('010203')
+  expect(buf2.toString('hex')).toEqual('102030')
+  expect(buf3.toString('hex')).toEqual('112233')
 })

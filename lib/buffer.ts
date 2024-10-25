@@ -324,10 +324,10 @@ export class Buffer extends Uint8Array {
   }
 
   /**
-   * Compares `buf1` to `buf2`, typically for the purpose of sorting arrays of `Buffer` instances. This is equivalent to calling `buf1.compare(buf2)`.
+   * Compares `buf1` to `buf2`, typically for the purpose of sorting arrays of `Buffer` instances. This is equivalent to calling {@link Buffer#compare}.
    * @param buf1 -
    * @param buf2 -
-   * @returns Either `-1`, `0`, or `1`, depending on the result of the comparison. See `buf.compare()` for details.
+   * @returns Either `-1`, `0`, or `1`, depending on the result of the comparison. See {@link Buffer#compare} for details.
    * @group Static Methods
    * @example
    * ```js
@@ -447,7 +447,7 @@ export class Buffer extends Uint8Array {
   /**
    * Allocates a new `Buffer` using an `array` of bytes in the range `0` – `255`. Array entries outside that range will be truncated to fit into it.
    *
-   * If `array` is an `Array`-like object (that is, one with a `length` property of type `number`), it is treated as if it is an array, unless it is a `Buffer` or a `Uint8Array`. This means all other `TypedArray` variants get treated as an `Array`. To create a `Buffer` from the bytes backing a `TypedArray`, use `Buffer.copyBytesFrom()`.
+   * If `array` is an `Array`-like object (that is, one with a `length` property of type `number`), it is treated as if it is an array, unless it is a `Buffer` or a `Uint8Array`. This means all other `TypedArray` variants get treated as an `Array`. To create a `Buffer` from the bytes backing a `TypedArray`, use {@link Buffer.copyBytesFrom}.
    * @param array -
    * @group Static Methods
    * @example
@@ -538,8 +538,8 @@ export class Buffer extends Uint8Array {
   static from (buffer: OrValueOf<Buffer | Uint8Array>): Buffer
 
   /**
-   * Restore a `Buffer` in the format returned from `Buffer#toJSON()`.
-   * @param json - A JSON object returned from `Buffer#toJSON()`.
+   * Restore a `Buffer` in the format returned from {@link Buffer#toJSON}.
+   * @param json - A JSON object returned from {@link Buffer#toJSON}.
    * @group Static Methods
    * @example
    * ```js
@@ -721,7 +721,7 @@ export class Buffer extends Uint8Array {
   }
 
   /**
-   * A helper function which `Buffer.isBuffer()` will invoke and determine whether `this` is a `Buffer` or not.
+   * A helper function which {@link Buffer.isBuffer} will invoke and determine whether `this` is a `Buffer` or not.
    * @returns `true` if `this` is a `Buffer`, `false` otherwise.
    * @hidden
    */
@@ -768,8 +768,59 @@ export class Buffer extends Uint8Array {
   }
 
   /**
-   * Parse a format string `format`. This is a internal method used by `Buffer.packCalcSize()`, `Buffer.pack()` and `Buffer.unpack()`.
+   * Parse a format string `format`. This is a internal method used by {@link Buffer.packCalcSize}, {@link Buffer.pack}, {@link Buffer.unpack} and {@link Buffer.iterUnpack}.
    * @param format - A format string.
+   * <h3>Byte Order, Size, and Alignment</h3>
+   *
+   * The first character of the format string can be used to indicate the byte order, size and alignment of the packed data, according to the following table:
+   *
+   * | Character | Byte order | Size | Alignment |
+   * | --------- | ---------- | ---- | --------- |
+   * | `@` | native | standard | none |
+   * | `=` | native | standard | none |
+   * | `<` | little-endian | standard | none |
+   * | `>` | big-endian | standard | none |
+   * | `!` | big-endian | standard | none |
+   *
+   * If the first character is not one of these, `@` is assumed.
+   *
+   * <h3>Format Characters</h3>
+   *
+   * Format characters have the following meaning; the conversion between C and Python values should be obvious given their types. The ‘Size’ column refers to the size of the packed value in bytes.
+   *
+   * | Format | C Type | JavaScript Type | Size | Notes |
+   * | ------ | ------ | --------------- | ---- | ----- |
+   * | `x` | pad byte | no value | 1 | (1) |
+   * | `c` | `char` | Buffer of length 1 | 1 | |
+   * | `b` | `signed char` | number | 1 | |
+   * | `B` | `unsigned char` | number | 1 | |
+   * | `?` | `_Bool` | boolean | 1 | (2) |
+   * | `h` | `short` | number | 2 | |
+   * | `H` | `unsigned short` | number | 2 | |
+   * | `i` | `int` | number | 4 | |
+   * | `I` | `unsigned int` | number | 4 | |
+   * | `l` | `long` | number | 4 | |
+   * | `L` | `unsigned long` | number | 4 | |
+   * | `q` | `long long` | BigInt of 64 bits | 8 | |
+   * | `Q` | `unsigned long long` | BigInt of 64 bits | 8 | |
+   * | `e` | (3) | number | 2 | (4) |
+   * | `f` | `float` | number | 4 | (4) |
+   * | `d` | `double` | number | 8 | (4) |
+   * | `s` | `char[]` | Buffer | | (5) |
+   * | `p` | `char[]` | Buffer | | (6) |
+   *
+   * Notes:
+   *
+   * 1. When packing, `x` inserts one NUL byte (`0x00`).
+   * 2. The `?` conversion code corresponds to the _Bool type defined by C standards since C99. It is represented by one byte.
+   * 3. The IEEE 754 binary16 "half precision" type was introduced in the 2008 revision of the [IEEE 754 standard](https://en.wikipedia.org/wiki/IEEE_754-2008_revision). It has a sign bit, a 5-bit exponent and 11-bit precision (with 10 bits explicitly stored), and can represent numbers between approximately `6.1e-05` and `6.5e+04` at full precision. This type is not widely supported by C compilers: on a typical machine, an unsigned short can be used for storage, but not for math operations. See the Wikipedia page on the [half-precision floating-point format](https://en.wikipedia.org/wiki/Half-precision_floating-point_format) for more information.
+   * 4. For the `f`, `d` and `e` conversion codes, the packed representation uses the IEEE 754 binary32, binary64 or binary16 format (for `f`, `d` or `e` respectively), regardless of the floating-point format used by the platform.
+   * 5. For the `s` format character, the count is interpreted as the length of the bytes, not a repeat count like for the other format characters; for example, `10s` means a single 10-byte Buffer mapping to or from a single Buffer, while `10c` means 10 separate one byte character elements (e.g., `cccccccccc`) mapping to or from ten different Buffer. (See Examples for a concrete demonstration of the difference.) If a count is not given, it defaults to `1`. For packing, the Buffer is truncated or padded with null bytes as appropriate to make it fit. For unpacking, the resulting Buffer always has exactly the specified number of bytes. As a special case, `0s` means a single, empty Buffer.
+   * 6. The `p` format character encodes a "Pascal string", meaning a short variable-length string stored in a fixed number of bytes, given by the count. The first byte stored is the length of the string, or 255, whichever is smaller. The bytes of the string follow. If the string passed in to pack() is too long (longer than the count minus 1), only the leading `count-1` bytes of the string are stored. If the string is shorter than `count-1`, it is padded with null bytes so that exactly count bytes in all are used. Note that for `unpack()`, the `p` format character consumes count bytes, but that the string returned can never contain more than 255 bytes.
+   *
+   * A format character may be preceded by an integral repeat count. For example, the format string `4h` means exactly the same as `hhhh`.
+   *
+   * For the `?` format character, the return value is either `true` or `false`. When packing, the truth value of the argument object is used. Either `0` or `1` in the bool representation will be packed, and any non-zero value will be `true` when unpacking.
    * @remarks Unlike Python struct, this method does not support native size and alignment (that wouldn't make much sense in a javascript). Instead, specify byte order and emit pad bytes explicitly.
    * @group Static Methods
    */
@@ -780,7 +831,7 @@ export class Buffer extends Uint8Array {
     const littleEndian = _.includes(['', '@', '='], matched[1]) ? isNativeLittleEndian : (matched[1] === '<')
     return {
       littleEndian,
-      items: _.map([...matched[2].matchAll(/\d*[xcbB?hHiIlLqQefdsp]/g)], ([s]) => {
+      items: _.map([...matched[2].matchAll(/\d*[xcbB?hHiIlLqQefdsp]/g)], ([s]): [number, string] => {
         const type = s[s.length - 1]
         const repeat = s.length > 1 ? _.parseInt(s.slice(0, -1)) : 1
         return [(type === 'p' && repeat > 255) ? 255 : repeat, type]
@@ -790,7 +841,7 @@ export class Buffer extends Uint8Array {
 
   /**
    * Return the required size corresponding to the format string `formatOrItems`.
-   * @param formatOrItems - A format string or parsed items return by `Buffer.packParseFormat().items`.
+   * @param formatOrItems - A format string or parsed items return by items of {@link Buffer.packParseFormat}.
    * @remarks Unlike Python struct, this method does not support native size and alignment (that wouldn't make much sense in a javascript). Instead, specify byte order and emit pad bytes explicitly.
    * @group Static Methods
    * @example
@@ -822,7 +873,7 @@ export class Buffer extends Uint8Array {
 
   /**
    * Creates a new `Buffer` containing the `vals` packed according to the format string `format`. The arguments must match the `vals` required by the `format` exactly.
-   * @param format - A format string.
+   * @param format - A format string. Please refer to {@link Buffer.packParseFormat} for more information.
    * @param vals - Values to pack.
    * @group Static Methods
    * @remarks Unlike Python struct, this method does not support native size and alignment (that wouldn't make much sense in a javascript). Instead, specify byte order and emit pad bytes explicitly.
@@ -841,9 +892,9 @@ export class Buffer extends Uint8Array {
   static pack (format: string, ...vals: any[]): Buffer
 
   /**
-   * Pack `vals` into `buf` according to the format string `format`. The arguments must match the `vals` required by the `format` exactly. The `buf`’s size in bytes must larger then the size required by the `format`, as reflected by `Buffer.packCalcSize()`.
+   * Pack `vals` into `buf` according to the format string `format`. The arguments must match the `vals` required by the `format` exactly. The `buf`’s size in bytes must larger then the size required by the `format`, as reflected by {@link Buffer.packCalcSize}.
    * @param buf - A `Buffer` to pack into.
-   * @param format - A format string.
+   * @param format - A format string. Please refer to {@link Buffer.packParseFormat} for more information.
    * @param vals - Values to pack.
    * @remarks Unlike Python struct, this method does not support native size and alignment (that wouldn't make much sense in a javascript). Instead, specify byte order and emit pad bytes explicitly.
    * @group Static Methods
@@ -887,9 +938,9 @@ export class Buffer extends Uint8Array {
   }
 
   /**
-   * Unpack from the `buf` (presumably packed by `pack(format, ...))` according to the format string `format`. The result is a tuple even if it contains exactly one item. The `buf`’s size in bytes must larger then the size required by the `format`, as reflected by `Buffer.packCalcSize()`.
+   * Unpack from the `buf` (presumably packed by `pack(format, ...))` according to the format string `format`. The result is a tuple even if it contains exactly one item. The `buf`’s size in bytes must larger then the size required by the `format`, as reflected by {@link Buffer.packCalcSize}.
    * @param buf - A `Buffer` to unpack from.
-   * @param format - A format string.
+   * @param format - A format string. Please refer to {@link Buffer.packParseFormat} for more information.
    * @remarks Unlike Python struct, this method does not support native size and alignment (that wouldn't make much sense in a javascript). Instead, specify byte order and emit pad bytes explicitly.
    * @group Static Methods
    * @example
@@ -919,9 +970,9 @@ export class Buffer extends Uint8Array {
   }
 
   /**
-   * Iteratively unpack from the `buf` according to the format string `format`. This method returns an iterator which will read equally sized chunks from the `buf` until remaining contents smaller then the size required by the `format`, as reflected by `Buffer.packCalcSize()`.
+   * Iteratively unpack from the `buf` according to the format string `format`. This method returns an iterator which will read equally sized chunks from the `buf` until remaining contents smaller then the size required by the `format`, as reflected by {@link Buffer.packCalcSize}.
    * @param buf - A `Buffer` to unpack from.
-   * @param format - A format string.
+   * @param format - A format string. Please refer to {@link Buffer.packParseFormat} for more information.
    * @remarks Unlike Python struct, this method does not support native size and alignment (that wouldn't make much sense in a javascript). Instead, specify byte order and emit pad bytes explicitly.
    * @group Static Methods
    * @example
@@ -1246,7 +1297,7 @@ export class Buffer extends Uint8Array {
   /**
    * @param value - What to search for.
    * - If `value` is a string, `value` is interpreted according to the character encoding in `encoding`.
-   * - If `value` is a `Buffer` or `Uint8Array`, `value` will be used in its entirety. To compare a partial Buffer, use `buf.subarray`.
+   * - If `value` is a `Buffer` or `Uint8Array`, `value` will be used in its entirety. To compare a partial Buffer, use {@link Buffer#subarray}.
    * - If `value` is a number, it will be coerced to a valid byte value, an integer between `0` and `255`.
    * - If `value` is an empty string or empty Buffer and `byteOffset` is less than `buf.length`, `byteOffset` will be returned.
    * - If `value` is empty and `byteOffset` is at least `buf.length`, `buf.length` will be returned.
@@ -1302,7 +1353,7 @@ export class Buffer extends Uint8Array {
   /**
    * @param value - What to search for.
    * - If `value` is a string, `value` is interpreted according to the character encoding in `encoding`.
-   * - If `value` is a `Buffer` or `Uint8Array`, `value` will be used in its entirety. To compare a partial Buffer, use `buf.subarray`.
+   * - If `value` is a `Buffer` or `Uint8Array`, `value` will be used in its entirety. To compare a partial Buffer, use {@link Buffer#subarray}.
    * - If `value` is a number, it will be coerced to a valid byte value, an integer between `0` and `255`.
    * - If `value` is an empty string or empty Buffer and `byteOffset` is less than `buf.length`, `byteOffset` will be returned.
    * - If `value` is empty and `byteOffset` is at least `buf.length`, `buf.length` will be returned.
@@ -1347,7 +1398,7 @@ export class Buffer extends Uint8Array {
   lastIndexOf (value: string, byteOffset: number, encoding?: KeyOfEncoding): number
 
   /**
-   * Identical to `buf.indexOf()`, except the last occurrence of `value` is found rather than the first occurrence.
+   * Identical to {@link Buffer#indexOf}, except the last occurrence of `value` is found rather than the first occurrence.
    * @param value - What to search for.
    * - If `value` is a number, it will be coerced to a valid byte value, an integer between `0` and `255`.
    * - If `value` is an empty string or empty `Buffer`, `byteOffset` will be returned.
@@ -1406,10 +1457,10 @@ export class Buffer extends Uint8Array {
   lastIndexOf (value: Buffer | Uint8Array | number, byteOffset?: number): number
 
   /**
-   * Identical to `buf.indexOf()`, except the last occurrence of `value` is found rather than the first occurrence.
+   * Identical to {@link Buffer#indexOf}, except the last occurrence of `value` is found rather than the first occurrence.
    * @param value - What to search for.
    * - If `value` is a string, `value` is interpreted according to the character encoding in `encoding`.
-   * - If `value` is a `Buffer` or `Uint8Array`, `value` will be used in its entirety. To compare a partial Buffer, use `buf.subarray`.
+   * - If `value` is a `Buffer` or `Uint8Array`, `value` will be used in its entirety. To compare a partial Buffer, use {@link Buffer#subarray}.
    * - If `value` is a number, it will be coerced to a valid byte value, an integer between `0` and `255`.
    * - If `value` is an empty string or empty `Buffer`, `byteOffset` will be returned.
    * @param byteOffset - Where to begin searching in `buf`. Default: `buf.length - 1`.
@@ -2122,7 +2173,7 @@ export class Buffer extends Uint8Array {
   }
 
   /**
-   * `JSON.stringify()` implicitly calls this method when stringifying a `Buffer` instance. `Buffer.from()` accepts objects in the format returned from this method. In particular, `Buffer.from(buf.toJSON())` works like `Buffer.from(buf)`.
+   * `JSON.stringify()` implicitly calls this method when stringifying a `Buffer` instance. {@link Buffer.from} accepts objects in the format returned from this method. In particular, `Buffer.from(buf.toJSON())` works like `Buffer.from(buf)`.
    * @returns a JSON representation of `buf`.
    * @example
    * ```js
@@ -2168,7 +2219,7 @@ export class Buffer extends Uint8Array {
    * ```
    */
   toString (encoding: KeyOfEncoding = 'utf8', start: number = 0, end: number = this.length): string {
-    encoding = _.toLower(encoding) as KeyOfEncoding
+    encoding = _.toLower(encoding)
     if (!Buffer.isEncoding(encoding)) throw new TypeError(`Unknown encoding: ${encoding as string}`)
     return Buffer[toStringFns[encoding]](this.subarray(start, end))
   }
@@ -2179,7 +2230,7 @@ export class Buffer extends Uint8Array {
    * @hidden
    */
   [customInspectSymbol] (): string {
-    const tmp = this.subarray(0, INSPECT_MAX_BYTES).toString('hex').match(/.{2}/g) as string[]
+    const tmp = (this.subarray(0, INSPECT_MAX_BYTES).toString('hex').match(/.{2}/g) ?? []) as string[]
     const strMoreBytes = this.length > INSPECT_MAX_BYTES ? ` ... ${this.length - INSPECT_MAX_BYTES} more bytes` : ''
     return `<Buffer ${tmp.join(' ')}${strMoreBytes}>`
   }
@@ -2986,8 +3037,169 @@ export class Buffer extends Uint8Array {
   }
 
   /**
-   * Calculates the xor of all bytes in `buf`. If `buf` is empty, returns `0`. You can use `buf.subarray()` to calculate the xor of a subset of `buf`. Xor is usually used to calculate checksums in serial communication.
-   * @returns The xor of all bytes in `buf`.
+   * The method Bitwise NOT every bytes in `this` in place and returns `this`.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf = Buffer.from('00010203', 'hex')
+   *   console.log(buf.not().toString('hex')) // Prints: fffefdfc
+   *   console.log(buf.toString('hex')) // Prints: fffefdfc
+   * })()
+   * ```
+   */
+  not (): this {
+    for (let i = 0; i < this.length; i++) this[i] = ~this[i]
+    return this
+  }
+
+  /**
+   * The method returns a new `Buffer` which is the Bitwise NOT of `this`.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf = Buffer.from('00010203', 'hex')
+   *   console.log(buf.toNoted().toString('hex')) // Prints: fffefdfc
+   *   console.log(buf.toString('hex')) // Prints: 00010203
+   * })()
+   * ```
+   */
+  toNoted (): Buffer {
+    return this.slice().not()
+  }
+
+  /**
+   * Calculates the Bitwise OR of all bytes in `buf`. If `buf` is empty, returns `0`. You can use {@link Buffer#subarray} to calculate the Bitwise OR of a subset of `buf`.
+   * @returns The Bitwise OR of all bytes in `buf`.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf = Buffer.from('010203040506070809', 'hex')
+   *   console.log(buf.or()) // Prints: 15
+   * })()
+   * ```
+   */
+  or (): number
+
+  /**
+   * The method Bitwise OR every bytes with `other` in place and returns `this`. If length of `other` is shorter than `this`, the remaining bytes in `this` will not be changed. If length of `other` is longer than `this`, the remaining bytes in `other` will be ignored.
+   * @param other - A `Buffer` to Bitwise OR with.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf1 = Buffer.from('010203', 'hex')
+   *   const buf2 = Buffer.from('102030', 'hex')
+   *   console.log(buf1.or(buf2).toString('hex')) // Prints: 112233
+   *   console.log(buf1.toString('hex')) // Prints: 112233
+   * })()
+   * ```
+   */
+  or (other: Buffer): this
+
+  or (other?: any): any {
+    if (Buffer.isBuffer(other)) {
+      const minLen = Math.min(this.length, other.length)
+      for (let i = 0; i < minLen; i++) this[i] |= other[i]
+      return this
+    } else {
+      let res = 0
+      for (const v of this) res |= v
+      return res
+    }
+  }
+
+  /**
+   * The method returns a new `Buffer` which is the Bitwise OR of `this` and `other`. If length of `other` is shorter than `this`, the remaining bytes in `this` will be copied to the new `Buffer`. If length of `other` is longer than `this`, the remaining bytes in `other` will be ignored.
+   * @param other - A `Buffer` to Bitwise OR with.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf1 = Buffer.from('010203', 'hex')
+   *   const buf2 = Buffer.from('102030', 'hex')
+   *   console.log(buf1.toOred(buf2).toString('hex')) // Prints: 112233
+   *   console.log(buf1.toString('hex')) // Prints: 010203
+   * })()
+   * ```
+   */
+  toOred (other: Buffer): Buffer {
+    return this.slice().or(other)
+  }
+
+  /**
+   * Calculates the Bitwise AND of all bytes in `this`. If `this` is empty, returns `0xFF`. You can use {@link Buffer#subarray} to calculate the Bitwise AND of a subset of `this`.
+   * @returns The Bitwise AND of all bytes in `buf`.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf = Buffer.from('010203040506070809', 'hex')
+   *   console.log(buf.and()) // Prints: 0
+   * })()
+   * ```
+   */
+  and (): number
+
+  /**
+   * The method Bitwise AND every bytes with `other` in place and returns `this`. If length of `other` is shorter than `this`, the remaining bytes in `this` will not be changed. If length of `other` is longer than `this`, the remaining bytes in `other` will be ignored.
+   * @param other - A `Buffer` to Bitwise AND with.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf1 = Buffer.from('010203', 'hex')
+   *   const buf2 = Buffer.from('102030', 'hex')
+   *   console.log(buf1.and(buf2).toString('hex')) // Prints: 000000
+   *   console.log(buf1.toString('hex')) // Prints: 000000
+   * })()
+   * ```
+   */
+  and (other: Buffer): this
+
+  and (other?: any): any {
+    if (Buffer.isBuffer(other)) {
+      const minLen = Math.min(this.length, other.length)
+      for (let i = 0; i < minLen; i++) this[i] &= other[i]
+      return this
+    } else {
+      let res = 0xFF
+      for (const v of this) res &= v
+      return res
+    }
+  }
+
+  /**
+   * The method returns a new `Buffer` which is the Bitwise AND of `this` and `other`. If length of `other` is shorter than `this`, the remaining bytes in `this` will be copied to the new `Buffer`. If length of `other` is longer than `this`, the remaining bytes in `other` will be ignored.
+   * @param other - A `Buffer` to Bitwise AND with.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf1 = Buffer.from('010203', 'hex')
+   *   const buf2 = Buffer.from('102030', 'hex')
+   *   console.log(buf1.toAnded(buf2).toString('hex')) // Prints: 000000
+   *   console.log(buf1.toString('hex')) // Prints: 010203
+   * })()
+   * ```
+   */
+  toAnded (other: Buffer): Buffer {
+    return this.slice().and(other)
+  }
+
+  /**
+   * Calculates the Bitwise XOR of all bytes in `buf`. If `buf` is empty, returns `0`. You can use {@link Buffer#subarray} to calculate the Bitwise XOR of a subset of `buf`. Xor is usually used to calculate checksums in serial communication.
+   * @returns The Bitwise XOR of all bytes in `buf`.
    * @example
    * ```js
    * ;(async function () {
@@ -2998,15 +3210,59 @@ export class Buffer extends Uint8Array {
    * })()
    * ```
    */
-  xor (): number {
-    let xor = 0
-    for (const v of this) xor ^= v
-    return xor
+  xor (): number
+
+  /**
+   * The method Bitwise XOR every bytes with `other` in place and returns `this`. If length of `other` is shorter than `this`, the remaining bytes in `this` will not be changed. If length of `other` is longer than `this`, the remaining bytes in `other` will be ignored.
+   * @param other - A `Buffer` to Bitwise XOR with.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf1 = Buffer.from('010203', 'hex')
+   *   const buf2 = Buffer.from('102030', 'hex')
+   *   console.log(buf1.xor(buf2).toString('hex')) // Prints: 112233
+   *   console.log(buf1.toString('hex')) // Prints: 112233
+   * })()
+   * ```
+   */
+  xor (other: Buffer): this
+
+  xor (other?: any): any {
+    if (Buffer.isBuffer(other)) {
+      const minLen = Math.min(this.length, other.length)
+      for (let i = 0; i < minLen; i++) this[i] ^= other[i]
+      return this
+    } else {
+      let res = 0
+      for (const v of this) res ^= v
+      return res
+    }
   }
 
   /**
-   * Pack `vals` into `buf` according to the format string `format`. The arguments must match the `vals` required by the `format` exactly. The `buf`’s size in bytes must larger then the size required by the `format`, as reflected by `Buffer.packCalcSize()`.
-   * @param format - A format string.
+   * The method returns a new `Buffer` which is the Bitwise XOR of `this` and `other`. If length of `other` is shorter than `this`, the remaining bytes in `this` will be copied to the new `Buffer`. If length of `other` is longer than `this`, the remaining bytes in `other` will be ignored.
+   * @param other - A `Buffer` to Bitwise XOR with.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf1 = Buffer.from('010203', 'hex')
+   *   const buf2 = Buffer.from('102030', 'hex')
+   *   console.log(buf1.toXored(buf2).toString('hex')) // Prints: 112233
+   *   console.log(buf1.toString('hex')) // Prints: 010203
+   * })()
+   * ```
+   */
+  toXored (other: Buffer): Buffer {
+    return this.slice().xor(other)
+  }
+
+  /**
+   * Pack `vals` into `buf` according to the format string `format`. The arguments must match the `vals` required by the `format` exactly. The `buf`’s size in bytes must larger then the size required by the `format`, as reflected by {@link Buffer.packCalcSize}.
+   * @param format - A format string. Please refer to {@link Buffer.packParseFormat} for more information.
    * @param vals - Values to pack.
    * @remarks Unlike Python struct, this method does not support native size and alignment (that wouldn't make much sense in a javascript). Instead, specify byte order and emit pad bytes explicitly.
    * @example
@@ -3030,8 +3286,8 @@ export class Buffer extends Uint8Array {
   }
 
   /**
-   * Unpack from the `buf` (presumably packed by `pack(format, ...))` according to the format string `format`. The result is a tuple even if it contains exactly one item. The `buf`’s size in bytes must larger then the size required by the `format`, as reflected by `Buffer.packCalcSize()`.
-   * @param format - A format string.
+   * Unpack from the `buf` (presumably packed by `pack(format, ...))` according to the format string `format`. The result is a tuple even if it contains exactly one item. The `buf`’s size in bytes must larger then the size required by the `format`, as reflected by {@link Buffer.packCalcSize}.
+   * @param format - A format string. Please refer to {@link Buffer.packParseFormat} for more information.
    * @remarks Unlike Python struct, this method does not support native size and alignment (that wouldn't make much sense in a javascript). Instead, specify byte order and emit pad bytes explicitly.
    * @example
    * ```js
@@ -3048,8 +3304,8 @@ export class Buffer extends Uint8Array {
   }
 
   /**
-   * Iteratively unpack from the `buf` according to the format string `format`. This method returns an iterator which will read equally sized chunks from the `buf` until remaining contents smaller then the size required by the `format`, as reflected by `Buffer.packCalcSize()`.
-   * @param format - A format string.
+   * Iteratively unpack from the `buf` according to the format string `format`. This method returns an iterator which will read equally sized chunks from the `buf` until remaining contents smaller then the size required by the `format`, as reflected by {@link Buffer.packCalcSize}.
+   * @param format - A format string. Please refer to {@link Buffer.packParseFormat} for more information.
    * @remarks Unlike Python struct, this method does not support native size and alignment (that wouldn't make much sense in a javascript). Instead, specify byte order and emit pad bytes explicitly.
    * @example
    * ```js
