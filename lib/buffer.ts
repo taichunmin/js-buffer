@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { type Uint8Array } from './Uint8Array'
+import { type Buffer as NodeBuffer } from 'node:buffer'
 
 const cachedDecoders: Record<string, TextDecoder> = {}
 const cachedEncoders: Record<string, TextEncoder> = {}
@@ -12,13 +12,14 @@ const K_MAX_LENGTH = 0x7FFFFFFF
 const SIGNED_MAX_VALUE = [0, 0x7F, 0x7FFF, 0x7FFFFF, 0x7FFFFFFF, 0x7FFFFFFFFF, 0x7FFFFFFFFFFF]
 const SIGNED_OFFSET = [0, 0x100, 0x10000, 0x1000000, 0x100000000, 0x10000000000, 0x1000000000000]
 
+const BASE62 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
 const CHARCODE_BASE64 = new Map() as unknown as CharCodeMap
 initCharCodeMap(CHARCODE_BASE64, '-_', 62)
-initCharCodeMap(CHARCODE_BASE64, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/')
+initCharCodeMap(CHARCODE_BASE64, `${BASE62}+/`)
 
 const CHARCODE_BASE64URL = new Map() as unknown as CharCodeMap
 initCharCodeMap(CHARCODE_BASE64URL, '+/', 62)
-initCharCodeMap(CHARCODE_BASE64URL, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_')
+initCharCodeMap(CHARCODE_BASE64URL, `${BASE62}-_`)
 
 const CHARCODE_HEX = new Map() as unknown as CharCodeMap
 initCharCodeMap(CHARCODE_HEX, 'ABCDEF', 10)
@@ -107,8 +108,13 @@ const unpackToFns = new Map<string, (ctx: PackFromContext) => void>([
  * @see See the [Buffer | Node.js Documentation](https://nodejs.org/api/buffer.html#class-buffer) for more information.
  * @property buffer - The underlying `ArrayBuffer` object based on which this `Buffer` object is created.
  */
-export class Buffer extends Uint8Array {
+export class Buffer extends (Uint8Array as IUint8Array) implements INodeBuffer {
   readonly #dv: DataView
+
+  /**
+   * @hidden
+   */
+  readonly [Symbol.toStringTag]: 'Buffer' = 'Buffer'
 
   /**
    * Creates a zero-length `Buffer`.
@@ -173,11 +179,10 @@ export class Buffer extends Uint8Array {
    * })()
    * ```
    */
-  constructor (arrayBuffer: ArrayBufferLike, byteOffset?: number, length?: number)
+  constructor (arrayBuffer: ArrayBufferLike | Buffer, byteOffset?: number, length?: number)
 
   constructor (...args: any[]) {
-    // @ts-expect-error TS2556: A spread argument must either have a tuple type or be passed to a rest parameter.
-    super(...args)
+    super(...args) // eslint-disable-line constructor-super
     this.#dv = new DataView(this.buffer, this.byteOffset, this.byteLength)
   }
 
@@ -227,9 +232,9 @@ export class Buffer extends Uint8Array {
    * })()
    * ```
    */
-  static alloc (size: number, fill: string, encoding?: KeyOfEncoding): Buffer
+  static alloc (size: number, fill: string, encoding?: Encoding): Buffer
 
-  static alloc (size: number, fill?: any, encoding: KeyOfEncoding = 'utf8'): Buffer {
+  static alloc (size: number, fill?: any, encoding: Encoding = 'utf8'): Buffer {
     if (!_.isSafeInteger(size) || size >= K_MAX_LENGTH) throw new RangeError(`Invalid size: ${size}`)
     const buf = new Buffer(size)
     if (_.isNil(fill)) return buf
@@ -312,12 +317,13 @@ export class Buffer extends Uint8Array {
    * })()
    * ```
    */
-  static byteLength (string: string, encoding?: KeyOfEncoding): number
+  static byteLength (string: string, encoding?: Encoding): number
 
-  static byteLength (value: any, encoding: KeyOfEncoding = 'utf8'): number {
+  static byteLength (value: any, encoding: string = 'utf8'): number {
     if (Buffer.isBuffer(value) || isInstance(value, ArrayBuffer) || isSharedArrayBuffer(value) || ArrayBuffer.isView(value)) return value.byteLength
     if (!_.isString(value)) throw new TypeError(`Invalid type of string: ${typeof value}`)
 
+    encoding = toEncodingOrFail(encoding)
     if (_.includes(['ascii', 'latin1', 'binary'], encoding)) return value.length
     if (_.includes(['ucs2', 'ucs-2', 'utf16le', 'utf-16le'], encoding)) return value.length * 2
     if (encoding === 'hex') return value.length >>> 1
@@ -349,9 +355,9 @@ export class Buffer extends Uint8Array {
    * })()
    * ```
    */
-  static compare (buf1: Buffer | Uint8Array, buf2: Buffer | Uint8Array): number
+  static compare (buf1: Buffer | Uint8Array, buf2: Buffer | Uint8Array): 0 | 1 | -1
 
-  static compare (buf1: any, buf2: any): number {
+  static compare (buf1: any, buf2: any): 0 | 1 | -1 {
     if (!Buffer.isBuffer(buf1)) {
       if (!ArrayBuffer.isView(buf1)) throw new TypeError('Invalid type')
       buf1 = Buffer.fromView(buf1)
@@ -538,7 +544,7 @@ export class Buffer extends Uint8Array {
    * })()
    * ```
    */
-  static from (buffer: OrValueOf<Buffer | Uint8Array>): Buffer
+  static from (buffer: OrValueOf<Buffer | NodeBuffer | Uint8Array>): Buffer
 
   /**
    * Restore a `Buffer` in the format returned from {@link Buffer#toJSON}.
@@ -600,7 +606,7 @@ export class Buffer extends Uint8Array {
    * })()
    * ```
    */
-  static from (object: OrValueOf<string> | { [Symbol.toPrimitive]: (hint?: 'string') => string }, encoding?: KeyOfEncoding): Buffer
+  static from (object: OrValueOf<string> | { [Symbol.toPrimitive]: (hint?: 'string') => string }, encoding?: Encoding): Buffer
 
   static from (val: any, encodingOrOffset?: any, length?: number): Buffer {
     const valueOfObj = val?.[Symbol.toPrimitive]?.('string') ?? val?.valueOf?.()
@@ -676,11 +682,10 @@ export class Buffer extends Uint8Array {
    * @param encoding - The encoding of `string`. Default: `'utf8'`.
    * @group Static Methods
    */
-  static fromString (string: string, encoding: KeyOfEncoding): Buffer
+  static fromString (string: string, encoding: Encoding): Buffer
 
-  static fromString (string: string, encoding: string = 'utf8'): Buffer {
-    encoding = _.toLower(encoding)
-    if (!Buffer.isEncoding(encoding)) throw new TypeError(`Unknown encoding: ${encoding}`)
+  static fromString (string: string, encoding: Encoding = 'utf8'): Buffer {
+    encoding = toEncodingOrFail(encoding)
     return Buffer[fromStringFns[encoding]](string)
   }
 
@@ -767,8 +772,8 @@ export class Buffer extends Uint8Array {
    * })()
    * ```
    */
-  static isEncoding (encoding: any): encoding is KeyOfEncoding {
-    return encoding in Encoding
+  static isEncoding (encoding: any): encoding is Encoding {
+    return EncodingConst.includes(encoding?.toLowerCase?.())
   }
 
   /**
@@ -1059,7 +1064,7 @@ export class Buffer extends Uint8Array {
     targetEnd: number = target.length,
     sourceStart: number = 0,
     sourceEnd: number = this.length
-  ): number {
+  ): 0 | 1 | -1 {
     if (!Buffer.isBuffer(target)) {
       if (!ArrayBuffer.isView(target)) throw new TypeError('Invalid type')
       target = Buffer.fromView(target)
@@ -1069,9 +1074,9 @@ export class Buffer extends Uint8Array {
     const len = Math.min(me.length, target.length)
     for (let i = 0; i < len; i++) {
       const diff = me[i] - target[i]
-      if (diff !== 0) return Math.sign(diff)
+      if (diff !== 0) return Math.sign(diff) as any
     }
-    return Math.sign(me.length - target.length)
+    return Math.sign(me.length - target.length) as any
   }
 
   /**
@@ -1129,6 +1134,30 @@ export class Buffer extends Uint8Array {
   }
 
   /**
+   * The method shallow copies part of this `Buffer` to another location in the same `Buffer` and returns this `Buffer` without modifying its length.
+   * @param target - Zero-based index at which to copy the sequence to. This corresponds to where the element at start will be copied to, and all elements between start and end are copied to succeeding indices.
+   * @param start - Zero-based index at which to start copying elements from.
+   * @param end - Zero-based index at which to end copying elements from. This method copies up to but not including end.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf = new Buffer(8)
+   *   buf.set([1, 2, 3])
+   *   console.log(buf.toString('hex')) // Prints: 0102030000000000
+   *   buf.copyWithin(3, 0, 3)
+   *   console.log(buf.toString('hex')) // Prints: 0102030102030000
+   * })()
+   * ```
+   */
+  copyWithin (target: number, start: number, end?: number): this {
+    // @ts-expect-error ts2339
+    super.copyWithin(target, start, end)
+    return this
+  }
+
+  /**
    * @param otherBuffer - A Buffer or Uint8Array with which to compare buf.
    * @returns `true` if both `buf` and `otherBuffer` have exactly the same bytes, `false` otherwise. Equivalent to `buf.compare(otherBuffer) === 0`.
    * @example
@@ -1153,9 +1182,9 @@ export class Buffer extends Uint8Array {
     return true
   }
 
-  fill (value: string, encoding?: KeyOfEncoding): this
-  fill (value: string, offset: number, encoding?: KeyOfEncoding): this
-  fill (value: string, offset: number, end: number, encoding?: KeyOfEncoding): this
+  fill (value: string, encoding?: Encoding): this
+  fill (value: string, offset: number, encoding?: Encoding): this
+  fill (value: string, offset: number, end: number, encoding?: Encoding): this
 
   /**
    * @param value - The value with which to fill `buf`. Empty value (Uint8Array, Buffer) is coerced to `0`. `value` is coerced to a `uint32` value if it is not a string, `Buffer`, or integer. If the resulting integer is greater than `255` (decimal), `buf` will be filled with `value & 255`.
@@ -1212,7 +1241,7 @@ export class Buffer extends Uint8Array {
    * @param end - Where to stop filling `buf` (not inclusive). Default: `buf.length`.
    * @param encoding - The encoding for `value`. Default: `'utf8'`.
    */
-  fill (value: any, offset: any = 0, end: any = this.length, encoding: KeyOfEncoding = 'utf8'): this {
+  fill (value: any, offset: any = 0, end: any = this.length, encoding: Encoding = 'utf8'): this {
     if (Buffer.isEncoding(offset)) [offset, encoding] = [0, offset]
     if (Buffer.isEncoding(end)) [end, encoding] = [this.length, end]
     if (!_.isSafeInteger(offset) || !_.isSafeInteger(end)) throw new RangeError('Invalid type of offset or end')
@@ -1237,8 +1266,8 @@ export class Buffer extends Uint8Array {
     return this
   }
 
-  includes (value: string, encoding?: KeyOfEncoding): boolean
-  includes (value: string, byteOffset: number, encoding?: KeyOfEncoding): boolean
+  includes (value: string, encoding?: Encoding): boolean
+  includes (value: string, byteOffset: number, encoding?: Encoding): boolean
 
   /**
    * Equivalent to `buf.indexOf() !== -1`.
@@ -1270,7 +1299,7 @@ export class Buffer extends Uint8Array {
    * @param encoding - The encoding of `value`. Default: `'utf8'`.
    * @returns `true` if `value` was found in `buf`, `false` otherwise.
    */
-  includes (value: any, byteOffset: any = 0, encoding: KeyOfEncoding = 'utf8'): boolean {
+  includes (value: any, byteOffset: any = 0, encoding: Encoding = 'utf8'): boolean {
     if (Buffer.isEncoding(byteOffset)) [byteOffset, encoding] = [0, byteOffset]
     byteOffset = _.toSafeInteger(byteOffset)
     if (byteOffset < 0) byteOffset = this.length + byteOffset
@@ -1296,8 +1325,8 @@ export class Buffer extends Uint8Array {
     return false
   }
 
-  indexOf (value: string, encoding?: KeyOfEncoding): number
-  indexOf (value: string, byteOffset: number, encoding?: KeyOfEncoding): number
+  indexOf (value: string, encoding?: Encoding): number
+  indexOf (value: string, byteOffset: number, encoding?: Encoding): number
 
   /**
    * @param value - What to search for.
@@ -1372,7 +1401,7 @@ export class Buffer extends Uint8Array {
    * @throws
    * - If `value` is not a string, number, or `Buffer`, this method will throw a `TypeError`.
    */
-  indexOf (val: any, byteOffset: any = 0, encoding: KeyOfEncoding = 'utf8'): number {
+  indexOf (val: any, byteOffset: any = 0, encoding: Encoding = 'utf8'): number {
     if (Buffer.isEncoding(byteOffset)) [byteOffset, encoding] = [0, byteOffset]
     byteOffset = _.toNumber(byteOffset)
     byteOffset = _.isNaN(byteOffset) ? 0 : _.toSafeInteger(byteOffset)
@@ -1399,8 +1428,8 @@ export class Buffer extends Uint8Array {
     return -1
   }
 
-  lastIndexOf (value: string, encoding?: KeyOfEncoding): number
-  lastIndexOf (value: string, byteOffset: number, encoding?: KeyOfEncoding): number
+  lastIndexOf (value: string, encoding?: Encoding): number
+  lastIndexOf (value: string, byteOffset: number, encoding?: Encoding): number
 
   /**
    * Identical to {@link Buffer#indexOf}, except the last occurrence of `value` is found rather than the first occurrence.
@@ -1478,7 +1507,7 @@ export class Buffer extends Uint8Array {
    * @throws
    * - If `value` is not a string, number, or `Buffer`, this method will throw a `TypeError`.
    */
-  lastIndexOf (value: any, byteOffset: any = this.length - 1, encoding: KeyOfEncoding = 'utf8'): number {
+  lastIndexOf (value: any, byteOffset: any = this.length - 1, encoding: Encoding = 'utf8'): number {
     if (Buffer.isEncoding(byteOffset)) [byteOffset, encoding] = [this.length - 1, byteOffset]
     byteOffset = _.toNumber(byteOffset)
     byteOffset = _.isNaN(byteOffset) ? (this.length - 1) : _.toSafeInteger(byteOffset)
@@ -2108,6 +2137,7 @@ export class Buffer extends Uint8Array {
    * ```
    */
   subarray (start: number = 0, end: number = this.length): Buffer {
+    // @ts-expect-error ts(2339)
     const buf = super.subarray(start, end)
     return new Buffer(buf.buffer, buf.byteOffset, buf.byteLength)
   }
@@ -2131,6 +2161,7 @@ export class Buffer extends Uint8Array {
    * ```
    */
   slice (start: number = 0, end: number = this.length): Buffer {
+    // @ts-expect-error ts(2339)
     return new Buffer(super.slice(start, end).buffer)
   }
 
@@ -2223,7 +2254,7 @@ export class Buffer extends Uint8Array {
    * ```
    */
   toJSON (): { type: 'Buffer', data: number[] } {
-    return { type: 'Buffer', data: [...this] }
+    return { type: 'Buffer', data: [...(this as any)] }
   }
 
   /**
@@ -2249,9 +2280,8 @@ export class Buffer extends Uint8Array {
    * })()
    * ```
    */
-  toString (encoding: KeyOfEncoding = 'utf8', start: number = 0, end: number = this.length): string {
-    encoding = _.toLower(encoding)
-    if (!Buffer.isEncoding(encoding)) throw new TypeError(`Unknown encoding: ${encoding as string}`)
+  toString (encoding: Encoding = 'utf8', start: number = 0, end: number = this.length): string {
+    encoding = toEncodingOrFail(encoding)
     return Buffer[toStringFns[encoding]](this.subarray(start, end))
   }
 
@@ -2280,6 +2310,7 @@ export class Buffer extends Uint8Array {
    * ```
    */
   reverse (): this {
+    // @ts-expect-error ts(2339)
     super.reverse()
     return this
   }
@@ -2300,7 +2331,7 @@ export class Buffer extends Uint8Array {
    * ```
    */
   toReversed (): Buffer {
-    return new Buffer(super.slice().reverse().buffer)
+    return this.slice().reverse()
   }
 
   /**
@@ -2389,8 +2420,8 @@ export class Buffer extends Uint8Array {
     return arr.join('')
   }
 
-  write (string: string, encoding?: KeyOfEncoding): number
-  write (string: string, offset: number, encoding?: KeyOfEncoding): number
+  write (string: string, encoding?: Encoding): number
+  write (string: string, offset: number, encoding?: Encoding): number
 
   /**
    * Writes `string` to `buf` at `offset` according to the character encoding in `encoding`. The `length` parameter is the number of bytes to write. If `buf` did not contain enough space to fit the entire string, only part of `string` will be written. However, partially encoded characters will not be written.
@@ -2416,7 +2447,7 @@ export class Buffer extends Uint8Array {
    * })()
    * ```
    */
-  write (string: string, offset: number, length: number, encoding?: KeyOfEncoding): number
+  write (string: string, offset: number, length: number, encoding?: Encoding): number
 
   /**
    * Writes `string` to `buf` at `offset` according to the character encoding in `encoding`. The `length` parameter is the number of bytes to write. If `buf` did not contain enough space to fit the entire string, only part of `string` will be written. However, partially encoded characters will not be written.
@@ -2433,7 +2464,6 @@ export class Buffer extends Uint8Array {
     if (!_.isString(string)) throw new TypeError('Invalid type of val')
     if (!_.isSafeInteger(offset)) throw new TypeError('Invalid type of offset')
     if (!_.isSafeInteger(length)) throw new TypeError('Invalid type of length')
-    if (!Buffer.isEncoding(encoding)) throw new TypeError(`Unknown encoding: ${encoding as string}`)
 
     const buf = Buffer.fromString(string, encoding)
     length = Math.min(buf.length, length, this.length - offset)
@@ -3422,6 +3452,7 @@ export class Buffer extends Uint8Array {
    * ```
    */
   sort (compareFn?: (a: number, b: number) => any): this {
+    // @ts-expect-error ts(2339)
     super.sort(compareFn)
     return this
   }
@@ -3450,7 +3481,7 @@ export class Buffer extends Uint8Array {
    * ```
    */
   toSorted (compareFn?: (a: number, b: number) => any): Buffer {
-    return new Buffer(super.slice().sort(compareFn).buffer)
+    return this.slice().sort(compareFn)
   }
 
   /**
@@ -3471,7 +3502,7 @@ export class Buffer extends Uint8Array {
    * ```
    */
   with (index: number, value: number): Buffer {
-    const buf = new Buffer(super.slice().buffer)
+    const buf = this.slice()
     buf[index] = value
     return buf
   }
@@ -3697,6 +3728,12 @@ function unpackToPascal (ctx: PackFromContext): void {
   ctx.offset += repeat
 }
 
+function toEncodingOrFail (encoding: any): Encoding {
+  const tmp = encoding?.toLowerCase?.()
+  if (!EncodingConst.includes(tmp)) throw new TypeError(`Unknown encoding: ${encoding}`)
+  return tmp
+}
+
 interface ArrayLike<T> {
   readonly length: number
   readonly [n: number]: T
@@ -3756,21 +3793,28 @@ function floatU16ToU32 (u16: number): number {
   return ((u16 << 16) & 0x80000000) + (((exp + 112) << 23) & 0x7F800000) + ((u16 << 13) & 0x7FE000)
 }
 
-enum Encoding {
-  'ucs-2' = 'ucs-2',
-  'utf-16le' = 'utf-16le',
-  'utf-8' = 'utf-8',
-  ascii = 'ascii',
-  base64 = 'base64',
-  base64url = 'base64url',
-  binary = 'binary',
-  hex = 'hex',
-  latin1 = 'latin1',
-  ucs2 = 'ucs2',
-  utf16le = 'utf16le',
-  utf8 = 'utf8',
-}
-type KeyOfEncoding = keyof typeof Encoding
+/**
+ * @hidden
+ */
+const EncodingConst = [
+  'ucs-2',
+  'utf-16le',
+  'utf-8',
+  'ascii',
+  'base64',
+  'base64url',
+  'binary',
+  'hex',
+  'latin1',
+  'ucs2',
+  'utf16le',
+  'utf8',
+] as const
+
+/**
+ * @hidden
+ */
+type Encoding = typeof EncodingConst[number]
 
 type Class<T> = new (...args: any[]) => T
 
@@ -3779,3 +3823,15 @@ type Class<T> = new (...args: any[]) => T
  * @typeParam T - The type of the value.
  */
 type OrValueOf<T> = T | { valueOf: () => T }
+
+/** Keys incompatible with both Uint8Array and NodeBuffer */
+type KeysIncompatibleBoth = typeof Symbol.toStringTag | 'copyWithin' | 'fill' | 'reverse' | 'slice' | 'sort' | 'subarray' | 'toReversed' | 'toSorted' | 'with'
+
+/** Keys incompatible with Uint8Array */
+type KeysIncompatibleUint8Array = KeysIncompatibleBoth | 'includes' | 'indexOf' | 'lastIndexOf' | 'toString'
+
+/** Keys incompatible with NodeBuffer */
+type KeysIncompatibleNodeBuffer = KeysIncompatibleBoth | 'swap16' | 'swap32' | 'swap64' | 'writeBigInt64BE' | 'writeBigInt64LE' | 'writeBigUint64BE' | 'writeBigUint64LE' | 'writeBigUInt64BE' | 'writeBigUInt64LE' | 'writeDoubleBE' | 'writeDoubleLE' | 'writeFloatBE' | 'writeFloatLE' | 'writeInt8' | 'writeInt16BE' | 'writeInt16LE' | 'writeInt32BE' | 'writeInt32LE' | 'writeIntBE' | 'writeIntLE' | 'writeUint8' | 'writeUint16BE' | 'writeUint16LE' | 'writeUint32BE' | 'writeUint32LE' | 'writeUInt8' | 'writeUInt16BE' | 'writeUInt16LE' | 'writeUInt32BE' | 'writeUInt32LE' | 'writeUintBE' | 'writeUIntBE' | 'writeUintLE' | 'writeUIntLE'
+
+type IUint8Array = Class<Omit<Uint8Array, KeysIncompatibleUint8Array>>
+type INodeBuffer = Omit<NodeBuffer, KeysIncompatibleNodeBuffer>

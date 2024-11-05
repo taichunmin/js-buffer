@@ -1954,3 +1954,17 @@ test('Buffer#toXored()', () => {
   expect(buf2.toString('hex')).toEqual('102030')
   expect(buf3.toString('hex')).toEqual('112233')
 })
+
+describe('Buffer#copyWithin', () => {
+  test('Buffer#copyWithin(target, start)', () => {
+    const buf = new Buffer([1, 2, 3, 4, 5, 6, 7, 8])
+    buf.copyWithin(3, 1)
+    expect(buf.toString('hex')).toEqual('0102030203040506')
+  })
+
+  test('Buffer#copyWithin(target, start, end)', () => {
+    const buf = new Buffer([1, 2, 3, 4, 5, 6, 7, 8])
+    buf.copyWithin(3, 1, 3)
+    expect(buf.toString('hex')).toEqual('0102030203060708')
+  })
+})
