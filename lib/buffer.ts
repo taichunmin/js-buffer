@@ -108,13 +108,13 @@ const unpackToFns = new Map<string, (ctx: PackFromContext) => void>([
  * @see See the [Buffer | Node.js Documentation](https://nodejs.org/api/buffer.html#class-buffer) for more information.
  * @property buffer - The underlying `ArrayBuffer` object based on which this `Buffer` object is created.
  */
-export class Buffer extends (Uint8Array as IUint8Array) implements INodeBuffer {
+export class Buffer extends Uint8Array implements INodeBuffer {
   readonly #dv: DataView
 
   /**
    * @hidden
    */
-  readonly [Symbol.toStringTag]: 'Buffer' = 'Buffer'
+  readonly [Symbol.toStringTag]: any = 'Buffer'
 
   /**
    * Creates a zero-length `Buffer`.
@@ -182,7 +182,8 @@ export class Buffer extends (Uint8Array as IUint8Array) implements INodeBuffer {
   constructor (arrayBuffer: ArrayBufferLike | Buffer, byteOffset?: number, length?: number)
 
   constructor (...args: any[]) {
-    super(...args) // eslint-disable-line constructor-super
+    // @ts-expect-error TS2556: A spread argument must either have a tuple type or be passed to a rest parameter.
+    super(...args)
     this.#dv = new DataView(this.buffer, this.byteOffset, this.byteLength)
   }
 
@@ -1152,7 +1153,6 @@ export class Buffer extends (Uint8Array as IUint8Array) implements INodeBuffer {
    * ```
    */
   copyWithin (target: number, start: number, end?: number): this {
-    // @ts-expect-error ts2339
     super.copyWithin(target, start, end)
     return this
   }
@@ -2137,7 +2137,6 @@ export class Buffer extends (Uint8Array as IUint8Array) implements INodeBuffer {
    * ```
    */
   subarray (start: number = 0, end: number = this.length): Buffer {
-    // @ts-expect-error ts(2339)
     const buf = super.subarray(start, end)
     return new Buffer(buf.buffer, buf.byteOffset, buf.byteLength)
   }
@@ -2161,7 +2160,6 @@ export class Buffer extends (Uint8Array as IUint8Array) implements INodeBuffer {
    * ```
    */
   slice (start: number = 0, end: number = this.length): Buffer {
-    // @ts-expect-error ts(2339)
     return new Buffer(super.slice(start, end).buffer)
   }
 
@@ -2254,7 +2252,7 @@ export class Buffer extends (Uint8Array as IUint8Array) implements INodeBuffer {
    * ```
    */
   toJSON (): { type: 'Buffer', data: number[] } {
-    return { type: 'Buffer', data: [...(this as any)] }
+    return { type: 'Buffer', data: [...this] }
   }
 
   /**
@@ -2310,7 +2308,6 @@ export class Buffer extends (Uint8Array as IUint8Array) implements INodeBuffer {
    * ```
    */
   reverse (): this {
-    // @ts-expect-error ts(2339)
     super.reverse()
     return this
   }
@@ -3452,7 +3449,6 @@ export class Buffer extends (Uint8Array as IUint8Array) implements INodeBuffer {
    * ```
    */
   sort (compareFn?: (a: number, b: number) => any): this {
-    // @ts-expect-error ts(2339)
     super.sort(compareFn)
     return this
   }
@@ -3824,14 +3820,21 @@ type Class<T> = new (...args: any[]) => T
  */
 type OrValueOf<T> = T | { valueOf: () => T }
 
-/** Keys incompatible with both Uint8Array and NodeBuffer */
-type KeysIncompatibleBoth = typeof Symbol.toStringTag | 'copyWithin' | 'fill' | 'reverse' | 'slice' | 'sort' | 'subarray' | 'toReversed' | 'toSorted' | 'with'
+/** Replace function return type. */
+type ReplaceReturnType<T extends (...a: any) => any, TNewReturn> = (...a: Parameters<T>) => TNewReturn
 
-/** Keys incompatible with Uint8Array */
-type KeysIncompatibleUint8Array = KeysIncompatibleBoth | 'includes' | 'indexOf' | 'lastIndexOf' | 'toString'
+/** Incompatible functions compare with NodeJS.Buffer */
+type KeysIncompatible = 'fill'
 
-/** Keys incompatible with NodeBuffer */
-type KeysIncompatibleNodeBuffer = KeysIncompatibleBoth | 'swap16' | 'swap32' | 'swap64' | 'writeBigInt64BE' | 'writeBigInt64LE' | 'writeBigUint64BE' | 'writeBigUint64LE' | 'writeBigUInt64BE' | 'writeBigUInt64LE' | 'writeDoubleBE' | 'writeDoubleLE' | 'writeFloatBE' | 'writeFloatLE' | 'writeInt8' | 'writeInt16BE' | 'writeInt16LE' | 'writeInt32BE' | 'writeInt32LE' | 'writeIntBE' | 'writeIntLE' | 'writeUint8' | 'writeUint16BE' | 'writeUint16LE' | 'writeUint32BE' | 'writeUint32LE' | 'writeUInt8' | 'writeUInt16BE' | 'writeUInt16LE' | 'writeUInt32BE' | 'writeUInt32LE' | 'writeUintBE' | 'writeUIntBE' | 'writeUintLE' | 'writeUIntLE'
+/** Functions that return new Buffer */
+type KeysOverrideReturnNewBuffer = 'subarray' | 'slice'
 
-type IUint8Array = Class<Omit<Uint8Array, KeysIncompatibleUint8Array>>
-type INodeBuffer = Omit<NodeBuffer, KeysIncompatibleNodeBuffer>
+/** Functions that return this */
+type KeysOverrideReturnThis = 'copyWithin' | 'reverse' | 'sort' | 'swap16' | 'swap32' | 'swap64' | 'writeBigInt64BE' | 'writeBigInt64LE' | 'writeBigUint64BE' | 'writeBigUint64LE' | 'writeBigUInt64BE' | 'writeBigUInt64LE' | 'writeDoubleBE' | 'writeDoubleLE' | 'writeFloatBE' | 'writeFloatLE' | 'writeInt8' | 'writeInt16BE' | 'writeInt16LE' | 'writeInt32BE' | 'writeInt32LE' | 'writeIntBE' | 'writeIntLE' | 'writeUint8' | 'writeUint16BE' | 'writeUint16LE' | 'writeUint32BE' | 'writeUint32LE' | 'writeUInt8' | 'writeUInt16BE' | 'writeUInt16LE' | 'writeUInt32BE' | 'writeUInt32LE' | 'writeUintBE' | 'writeUIntBE' | 'writeUintLE' | 'writeUIntLE'
+
+type INodeBuffer = Omit<NodeBuffer, KeysIncompatible | KeysOverrideReturnNewBuffer | KeysOverrideReturnThis> & {
+  // @ts-expect-error ts(2526)
+  [K in KeysOverrideReturnThis]: ReplaceReturnType<NodeBuffer[K], this>
+} & {
+  [K in KeysOverrideReturnNewBuffer]: ReplaceReturnType<NodeBuffer[K], INodeBuffer>
+}
