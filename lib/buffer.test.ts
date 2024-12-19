@@ -194,6 +194,7 @@ describe('Buffer.copyBytesFrom()', () => {
     const u16 = new Uint16Array([0, 0xffff])
     const actual = Buffer.copyBytesFrom(u16)
     u16[1] = 0
+    expect(Buffer.isBuffer(actual)).toBe(true)
     expect(actual.toString('hex')).toEqual('0000ffff')
   })
 
@@ -201,6 +202,7 @@ describe('Buffer.copyBytesFrom()', () => {
     const u16 = new Uint16Array([0, 0xffff])
     const actual = Buffer.copyBytesFrom(u16, 1)
     u16[1] = 0
+    expect(Buffer.isBuffer(actual)).toBe(true)
     expect(actual.toString('hex')).toEqual('ffff')
   })
 
@@ -208,12 +210,14 @@ describe('Buffer.copyBytesFrom()', () => {
     const u16 = new Uint16Array([0, 0xffff])
     const actual = Buffer.copyBytesFrom(u16, 1, 1)
     u16[1] = 0
+    expect(Buffer.isBuffer(actual)).toBe(true)
     expect(actual.toString('hex')).toEqual('ffff')
   })
 
   test('DataView', () => {
     const dv = new DataView(new Uint8Array([1, 2, 3]).buffer)
     const actual = Buffer.copyBytesFrom(dv)
+    expect(Buffer.isBuffer(actual)).toBe(true)
     expect(actual.toString('hex')).toEqual('010203')
   })
 })
@@ -681,27 +685,32 @@ describe('Buffer#equals()', () => {
   test('return true', () => {
     const buf1 = Buffer.from([0, 1])
     const buf2 = Buffer.from([0, 1])
-    expect(Buffer.equals(buf1, buf2)).toEqual(true)
+    expect(Buffer.equals(buf1, buf2)).toBe(true)
   })
 
   test('return false with invalid type', () => {
     const actual = Buffer.from([0, 1]).equals('' as any)
-    expect(actual).toEqual(false)
+    expect(actual).toBe(false)
+  })
+
+  test('return true with same data different type', () => {
+    const actual = Buffer.from([0, 1]).equals(Uint8Array.of(0, 1))
+    expect(actual).toBe(true)
   })
 
   test('return false with different data Buffer', () => {
     const actual = Buffer.from([0, 1]).equals(Buffer.from([0]))
-    expect(actual).toEqual(false)
+    expect(actual).toBe(false)
   })
 
   test('return false with same length different data Buffer', () => {
     const actual = Buffer.from([0, 1]).equals(Buffer.from([2, 3]))
-    expect(actual).toEqual(false)
+    expect(actual).toBe(false)
   })
 
   test('return true with same data Buffer', () => {
     const actual = Buffer.from([0, 1]).equals(Buffer.from([0, 1]))
-    expect(actual).toEqual(true)
+    expect(actual).toBe(true)
   })
 })
 
@@ -1491,12 +1500,14 @@ describe('Buffer#slice()', () => {
   test('0 arguments', () => {
     const buf = Buffer.from('buffer')
     const actual = buf.slice()
+    expect(Buffer.isBuffer(actual)).toBe(true)
     expect(actual.toString()).toEqual('buffer')
   })
 
   test('1 arguments', () => {
     const buf = Buffer.from('buffer')
     const actual = buf.slice(1)
+    expect(Buffer.isBuffer(actual)).toBe(true)
     expect(actual.toString()).toEqual('uffer')
   })
 })
@@ -1505,6 +1516,7 @@ test('Buffer#reverse()', () => {
   const buf1 = Buffer.from('123')
   const buf2 = buf1.reverse()
   expect(buf1.toString()).toEqual('321')
+  expect(Buffer.isBuffer(buf2)).toBe(true)
   expect(buf1).toBe(buf2)
 })
 
@@ -1512,6 +1524,7 @@ test('Buffer#toReversed()', () => {
   const buf1 = Buffer.from('123')
   const buf2 = buf1.toReversed()
   expect(buf1.toString()).toEqual('123')
+  expect(Buffer.isBuffer(buf2)).toBe(true)
   expect(buf2.toString()).toEqual('321')
 })
 
@@ -1839,6 +1852,7 @@ describe('Buffer#sort()', () => {
     const buf1 = Buffer.from('4010502030', 'hex')
     const buf2 = buf1.sort()
     expect(buf2.toString('hex')).toEqual('1020304050')
+    expect(Buffer.isBuffer(buf2)).toBe(true)
     expect(buf1).toBe(buf2)
   })
 
@@ -1846,6 +1860,7 @@ describe('Buffer#sort()', () => {
     const buf1 = Buffer.from('4010502030', 'hex')
     const buf2 = buf1.sort((a, b) => b - a)
     expect(buf2.toString('hex')).toEqual('5040302010')
+    expect(Buffer.isBuffer(buf2)).toBe(true)
     expect(buf1).toBe(buf2)
   })
 })
@@ -1855,6 +1870,7 @@ describe('Buffer#toSorted()', () => {
     const buf1 = Buffer.from('4010502030', 'hex')
     const buf2 = buf1.toSorted()
     expect(buf1.toString('hex')).toEqual('4010502030')
+    expect(Buffer.isBuffer(buf2)).toBe(true)
     expect(buf2.toString('hex')).toEqual('1020304050')
   })
 
@@ -1862,6 +1878,7 @@ describe('Buffer#toSorted()', () => {
     const buf1 = Buffer.from('4010502030', 'hex')
     const buf2 = buf1.toSorted((a, b) => b - a)
     expect(buf1.toString('hex')).toEqual('4010502030')
+    expect(Buffer.isBuffer(buf2)).toBe(true)
     expect(buf2.toString('hex')).toEqual('5040302010')
   })
 })
@@ -1870,6 +1887,7 @@ test('Buffer#with()', () => {
   const buf1 = Buffer.from('0102030405', 'hex')
   const buf2 = buf1.with(2, 6)
   expect(buf1.toString('hex')).toEqual('0102030405')
+  expect(Buffer.isBuffer(buf2)).toBe(true)
   expect(buf2.toString('hex')).toEqual('0102060405')
 })
 
@@ -1955,16 +1973,18 @@ test('Buffer#toXored()', () => {
   expect(buf3.toString('hex')).toEqual('112233')
 })
 
-describe('Buffer#copyWithin', () => {
+describe('Buffer#copyWithin()', () => {
   test('Buffer#copyWithin(target, start)', () => {
-    const buf = new Buffer([1, 2, 3, 4, 5, 6, 7, 8])
-    buf.copyWithin(3, 1)
-    expect(buf.toString('hex')).toEqual('0102030203040506')
+    const buf1 = new Buffer([1, 2, 3, 4, 5, 6, 7, 8])
+    const buf2 = buf1.copyWithin(3, 1)
+    expect(buf1.toString('hex')).toEqual('0102030203040506')
+    expect(Buffer.isBuffer(buf2)).toBe(true)
   })
 
   test('Buffer#copyWithin(target, start, end)', () => {
-    const buf = new Buffer([1, 2, 3, 4, 5, 6, 7, 8])
-    buf.copyWithin(3, 1, 3)
-    expect(buf.toString('hex')).toEqual('0102030203060708')
+    const buf1 = new Buffer([1, 2, 3, 4, 5, 6, 7, 8])
+    const buf2 = buf1.copyWithin(3, 1, 3)
+    expect(buf1.toString('hex')).toEqual('0102030203060708')
+    expect(Buffer.isBuffer(buf2)).toBe(true)
   })
 })

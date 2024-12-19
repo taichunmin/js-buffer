@@ -118,6 +118,15 @@ export class Buffer extends Uint8Array implements INodeBuffer {
 
   /**
    * Creates a zero-length `Buffer`.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf = new Buffer()
+   *   console.log(buf.length) // Prints: 0
+   * })()
+   * ```
    */
   constructor ()
 
@@ -137,7 +146,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
   constructor (length: number)
 
   /**
-   * Creates a new `Buffer` copied from `array`. `TypedArray` will be treated as an `Array`.
+   * Creates a new `Buffer` copied from `arrayLike`. `TypedArray` will be treated as an `Array`.
    * @param arrayLike - An array of bytes in the range `0` – `255`. Array entries outside that range will be truncated to fit into it.
    * @example
    * ```js
@@ -161,7 +170,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
   constructor (arrayLike: ArrayLike<number> | Iterable<number> | ArrayBufferView)
 
   /**
-   * Creates a view of the `ArrayBuffer` without copying the underlying memory. For example, when passed a reference to the `.buffer` property of a `TypedArray` instance, the newly created `Buffer` will share the same allocated memory as the `TypedArray`'s underlying `ArrayBuffer`.
+   * Creates a view of the `arrayBuffer` without copying the underlying memory. For example, when passed a reference to the `.buffer` property of a `TypedArray` instance, the newly created `Buffer` will share the same allocated memory as the `TypedArray`'s underlying `ArrayBuffer`.
    * @param arrayBuffer - An `ArrayBuffer` or `SharedArrayBuffer`, for example the `.buffer` property of a `TypedArray`.
    * @param byteOffset - Index of first byte to expose. Default: `0`.
    * @param length - Number of bytes to expose. Default: `arrayBuffer.byteLength - byteOffset`.
@@ -429,7 +438,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * ```
    */
   static copyBytesFrom (view: ArrayBufferView, offset: number = 0, length?: number): Buffer {
-    return new Buffer(Buffer.fromView(view, offset, length))
+    return Buffer.fromView(view, offset, length).slice()
   }
 
   /**
@@ -1136,6 +1145,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
 
   /**
    * The method shallow copies part of this `Buffer` to another location in the same `Buffer` and returns this `Buffer` without modifying its length.
+   * @group Methods
    * @param target - Zero-based index at which to copy the sequence to. This corresponds to where the element at start will be copied to, and all elements between start and end are copied to succeeding indices.
    * @param start - Zero-based index at which to start copying elements from.
    * @param end - Zero-based index at which to end copying elements from. This method copies up to but not including end.
@@ -1152,10 +1162,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * })()
    * ```
    */
-  copyWithin (target: number, start: number, end?: number): this {
-    super.copyWithin(target, start, end)
-    return this
-  }
+  declare copyWithin: (target: number, start: number, end?: number) => this
 
   /**
    * @param otherBuffer - A Buffer or Uint8Array with which to compare buf.
@@ -1174,25 +1181,40 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * })()
    * ```
    */
-  equals (otherBuffer: Buffer | Uint8Array): boolean
+  equals (otherBuffer: this | Uint8Array): boolean
 
   equals (otherBuffer: any): boolean {
-    if (!Buffer.isBuffer(otherBuffer) || this.length !== otherBuffer.length) return false
+    if (!Buffer.isBuffer(otherBuffer)) {
+      if (!ArrayBuffer.isView(otherBuffer)) return false
+      otherBuffer = Buffer.fromView(otherBuffer)
+    }
+    if (this.length !== otherBuffer.length) return false
     for (let i = 0; i < this.length; i++) if (this[i] !== otherBuffer[i]) return false
     return true
   }
 
+  /**
+   * Fill the entire `buf` with the specified `value`.
+   * @param value - The value with which to fill buf. Empty string is coerced to `0`.
+   * @param encoding - The encoding for `value`. Default: `'utf8'`.
+   */
   fill (value: string, encoding?: Encoding): this
-  fill (value: string, offset: number, encoding?: Encoding): this
-  fill (value: string, offset: number, end: number, encoding?: Encoding): this
 
   /**
-   * @param value - The value with which to fill `buf`. Empty value (Uint8Array, Buffer) is coerced to `0`. `value` is coerced to a `uint32` value if it is not a string, `Buffer`, or integer. If the resulting integer is greater than `255` (decimal), `buf` will be filled with `value & 255`.
+   * Fill the `buf` with the specified `value` start from `offset`.
+   * @param value - The value with which to fill buf. Empty string is coerced to `0`.
+   * @param offset - Number of bytes to skip before starting to fill `buf`. Default: `0`.
+   * @param encoding - The encoding for `value`. Default: `'utf8'`.
+   */
+  fill (value: string, offset: number, encoding?: Encoding): this
+
+  /**
+   * Fill the `buf` with the specified `value` start from `offset` and stop before `end`.
+   * @param value - The value with which to fill buf. Empty string is coerced to `0`.
    * @param offset - Number of bytes to skip before starting to fill `buf`. Default: `0`.
    * @param end - Where to stop filling `buf` (not inclusive). Default: `buf.length`.
+   * @param encoding - The encoding for `value`. Default: `'utf8'`.
    * @example
-   * Fills `buf` with the specified `value`. If the `offset` and `end` are not given, the entire `buf` will be filled:
-   *
    * ```js
    * ;(async function () {
    *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
@@ -1233,14 +1255,35 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * })()
    * ```
    */
-  fill (value: Buffer | Uint8Array | number, offset?: number, end?: number): this
+  fill (value: string, offset: number, end: number, encoding?: Encoding): this
 
   /**
-   * @param value - The value with which to fill buf. Empty string is coerced to `0`.
+   * Fill `buf` with the specified `value`. If the `offset` and `end` are not given, the entire `buf` will be filled.
+   *
+   * @param value - The value with which to fill `buf`. Empty value (Uint8Array, Buffer) is coerced to `0`. `value` is coerced to a `uint32` value if it is not a string, `Buffer`, or integer. If the resulting integer is greater than `255` (decimal), `buf` will be filled with `value & 255`.
    * @param offset - Number of bytes to skip before starting to fill `buf`. Default: `0`.
    * @param end - Where to stop filling `buf` (not inclusive). Default: `buf.length`.
-   * @param encoding - The encoding for `value`. Default: `'utf8'`.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   // Fill a `Buffer` with a Buffer
+   *   const buf1 = Buffer.allocUnsafe(10).fill(Buffer.of(65))
+   *   console.log(buf1.toString()) // Prints: AAAAAAAAAA
+   *
+   *   // Fill a `Buffer` with an Uint8Array
+   *   const buf2 = Buffer.allocUnsafe(10).fill(Uint8Array.of(65))
+   *   console.log(buf2.toString()) // Prints: AAAAAAAAAA
+   *
+   *   // Fill a `Buffer` with number
+   *   const buf3 = Buffer.allocUnsafe(10).fill(65)
+   *   console.log(buf3.toString()) // Prints: AAAAAAAAAA
+   * })()
+   * ```
    */
+  fill (value: this | Uint8Array | number, offset?: number, end?: number): this
+
   fill (value: any, offset: any = 0, end: any = this.length, encoding: Encoding = 'utf8'): this {
     if (Buffer.isEncoding(offset)) [offset, encoding] = [0, offset]
     if (Buffer.isEncoding(end)) [end, encoding] = [this.length, end]
@@ -1266,7 +1309,32 @@ export class Buffer extends Uint8Array implements INodeBuffer {
     return this
   }
 
+  /**
+   * Equivalent to `buf.indexOf() !== -1`.
+   * @param value - What to search for.
+   * @param encoding - The encoding of `value`. Default: `'utf8'`.
+   * @returns `true` if `value` was found in `buf`, `false` otherwise.
+   */
   includes (value: string, encoding?: Encoding): boolean
+
+  /**
+   * Equivalent to `buf.indexOf() !== -1`.
+   * @param value - What to search for.
+   * @param byteOffset - Where to begin searching in `buf`. If negative, then offset is calculated from the end of `buf`. Default: `0`.
+   * @param encoding - The encoding of `value`. Default: `'utf8'`.
+   * @returns `true` if `value` was found in `buf`, `false` otherwise.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf = Buffer.from('this is a buffer')
+   *   console.log(buf.includes('this')) // Prints: true
+   *   console.log(buf.includes('is')) // Prints: true
+   *   console.log(buf.includes('this', 4)) // Prints: false
+   * })()
+   * ```
+   */
   includes (value: string, byteOffset: number, encoding?: Encoding): boolean
 
   /**
@@ -1280,25 +1348,16 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from('this is a buffer')
-   *   console.log(buf.includes('this')) // Prints: true
-   *   console.log(buf.includes('is')) // Prints: true
    *   console.log(buf.includes(Buffer.from('a buffer'))) // Prints: true
    *   console.log(buf.includes(97)) // Prints: true (97 is the decimal ASCII value for 'a')
+   *   console.log(buf.includes(Uint8Array.of(97))) // Prints: true (97 is the decimal ASCII value for 'a')
    *   console.log(buf.includes(Buffer.from('a buffer example'))) // Prints: false
    *   console.log(buf.includes(Buffer.from('a buffer example').slice(0, 8))) // Prints: true
-   *   console.log(buf.includes('this', 4)) // Prints: false
    * })()
    * ```
    */
-  includes (value: Buffer | Uint8Array | number, byteOffset?: number): boolean
+  includes (value: this | Uint8Array | number, byteOffset?: number): boolean
 
-  /**
-   * Equivalent to `buf.indexOf() !== -1`.
-   * @param value - What to search for.
-   * @param byteOffset - Where to begin searching in `buf`. If negative, then offset is calculated from the end of `buf`. Default: `0`.
-   * @param encoding - The encoding of `value`. Default: `'utf8'`.
-   * @returns `true` if `value` was found in `buf`, `false` otherwise.
-   */
   includes (value: any, byteOffset: any = 0, encoding: Encoding = 'utf8'): boolean {
     if (Buffer.isEncoding(byteOffset)) [byteOffset, encoding] = [0, byteOffset]
     byteOffset = _.toSafeInteger(byteOffset)
@@ -1325,7 +1384,68 @@ export class Buffer extends Uint8Array implements INodeBuffer {
     return false
   }
 
+  /**
+   * @param value - What to search for.
+   * - If `value` is a string, `value` is interpreted according to the character encoding in `encoding`.
+   * - If `value` is a `Buffer` or `Uint8Array`, `value` will be used in its entirety. To compare a partial Buffer, use {@link Buffer#subarray}.
+   * - If `value` is a number, it will be coerced to a valid byte value, an integer between `0` and `255`.
+   * - If `value` is an empty string or empty Buffer and `byteOffset` is less than `buf.length`, `byteOffset` will be returned.
+   * - If `value` is empty and `byteOffset` is at least `buf.length`, `buf.length` will be returned.
+   * @param encoding - The encoding of `value`. Default: `'utf8'`.
+   * @returns
+   * - The index of the first occurrence of `value` in `buf`
+   * - `-1` if `buf` does not contain value.
+   * @throws
+   * - If `value` is not a string, number, or `Buffer`, this method will throw a `TypeError`.
+   */
   indexOf (value: string, encoding?: Encoding): number
+
+  /**
+   * @param value - What to search for.
+   * - If `value` is a string, `value` is interpreted according to the character encoding in `encoding`.
+   * - If `value` is a `Buffer` or `Uint8Array`, `value` will be used in its entirety. To compare a partial Buffer, use {@link Buffer#subarray}.
+   * - If `value` is a number, it will be coerced to a valid byte value, an integer between `0` and `255`.
+   * - If `value` is an empty string or empty Buffer and `byteOffset` is less than `buf.length`, `byteOffset` will be returned.
+   * - If `value` is empty and `byteOffset` is at least `buf.length`, `buf.length` will be returned.
+   * @param byteOffset - Where to begin searching in `buf`. Default: `0`.
+   * - If negative, then offset is calculated from the end of `buf`.
+   * - If not a integer, it will be coerced to integer by `_.toSafeInteger`.
+   * @param encoding - The encoding of `value`. Default: `'utf8'`.
+   * @returns
+   * - The index of the first occurrence of `value` in `buf`
+   * - `-1` if `buf` does not contain value.
+   * @throws
+   * - If `value` is not a string, number, or `Buffer`, this method will throw a `TypeError`.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf = Buffer.from('this is a buffer')
+   *   console.log(buf.indexOf('this')) // Prints: 0
+   *   console.log(buf.indexOf('is')) // Prints: 2
+   *
+   *   const utf16Buffer = Buffer.from('\u039a\u0391\u03a3\u03a3\u0395', 'utf16le')
+   *   console.log(utf16Buffer.indexOf('\u03a3', 0, 'utf16le')) // Prints: 4
+   *   console.log(utf16Buffer.indexOf('\u03a3', -4, 'utf16le')) // Prints: 6
+   * })()
+   * ```
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const b = Buffer.from('abcdef')
+   *
+   *   // Passing a byteOffset that coerces to 0.
+   *   // Prints: 1, searching the whole buffer.
+   *   console.log(b.indexOf('b', undefined))
+   *   console.log(b.indexOf('b', {}))
+   *   console.log(b.indexOf('b', null))
+   *   console.log(b.indexOf('b', []))
+   * })()
+   * ```
+   */
   indexOf (value: string, byteOffset: number, encoding?: Encoding): number
 
   /**
@@ -1349,16 +1469,10 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
    *   const buf = Buffer.from('this is a buffer')
-   *   console.log(buf.indexOf('this')) // Prints: 0
-   *   console.log(buf.indexOf('is')) // Prints: 2
    *   console.log(buf.indexOf(Buffer.from('a buffer'))) // Prints: 8
    *   console.log(buf.indexOf(97)) // Prints: 8 (97 is the decimal ASCII value for 'a')
    *   console.log(buf.indexOf(Buffer.from('a buffer example'))) // Prints: -1
    *   console.log(buf.indexOf(Buffer.from('a buffer example').slice(0, 8))) // Prints: 8
-   *
-   *   const utf16Buffer = Buffer.from('\u039a\u0391\u03a3\u03a3\u0395', 'utf16le')
-   *   console.log(utf16Buffer.indexOf('\u03a3', 0, 'utf16le')) // Prints: 4
-   *   console.log(utf16Buffer.indexOf('\u03a3', -4, 'utf16le')) // Prints: 6
    * })()
    * ```
    * @example
@@ -1372,35 +1486,11 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    *   // Prints: 2, equivalent to searching for 99 or 'c'.
    *   console.log(b.indexOf(99.9))
    *   console.log(b.indexOf(256 + 99))
-   *
-   *   // Passing a byteOffset that coerces to 0.
-   *   // Prints: 1, searching the whole buffer.
-   *   console.log(b.indexOf('b', undefined))
-   *   console.log(b.indexOf('b', {}))
-   *   console.log(b.indexOf('b', null))
-   *   console.log(b.indexOf('b', []))
    * })()
    * ```
    */
-  indexOf (value: Buffer | Uint8Array | number, byteOffset?: number): number
+  indexOf (value: this | Uint8Array | number, byteOffset?: number): number
 
-  /**
-   * @param value - What to search for.
-   * - If `value` is a string, `value` is interpreted according to the character encoding in `encoding`.
-   * - If `value` is a `Buffer` or `Uint8Array`, `value` will be used in its entirety. To compare a partial Buffer, use {@link Buffer#subarray}.
-   * - If `value` is a number, it will be coerced to a valid byte value, an integer between `0` and `255`.
-   * - If `value` is an empty string or empty Buffer and `byteOffset` is less than `buf.length`, `byteOffset` will be returned.
-   * - If `value` is empty and `byteOffset` is at least `buf.length`, `buf.length` will be returned.
-   * @param byteOffset - Where to begin searching in `buf`. Default: `0`.
-   * - If negative, then offset is calculated from the end of `buf`.
-   * - If not a integer, it will be coerced to integer by `_.toSafeInteger`.
-   * @param encoding - The encoding of `value`. Default: `'utf8'`.
-   * @returns
-   * - The index of the first occurrence of `value` in `buf`
-   * - `-1` if `buf` does not contain value.
-   * @throws
-   * - If `value` is not a string, number, or `Buffer`, this method will throw a `TypeError`.
-   */
   indexOf (val: any, byteOffset: any = 0, encoding: Encoding = 'utf8'): number {
     if (Buffer.isEncoding(byteOffset)) [byteOffset, encoding] = [0, byteOffset]
     byteOffset = _.toNumber(byteOffset)
@@ -1428,7 +1518,74 @@ export class Buffer extends Uint8Array implements INodeBuffer {
     return -1
   }
 
+  /**
+   * Identical to {@link Buffer#indexOf}, except the last occurrence of `value` is found rather than the first occurrence.
+   * @param value - What to search for.
+   * - If `value` is a string, `value` is interpreted according to the character encoding in `encoding`.
+   * - If `value` is a `Buffer` or `Uint8Array`, `value` will be used in its entirety. To compare a partial Buffer, use {@link Buffer#subarray}.
+   * - If `value` is a number, it will be coerced to a valid byte value, an integer between `0` and `255`.
+   * - If `value` is an empty string or empty `Buffer`, `byteOffset` will be returned.
+   * @param encoding - The encoding of `value`. Default: `'utf8'`.
+   * @returns
+   * - The index of the last occurrence of `value` in `buf`
+   * - `-1` if `buf` does not contain `value`.
+   * @throws
+   * - If `value` is not a string, number, or `Buffer`, this method will throw a `TypeError`.
+   */
   lastIndexOf (value: string, encoding?: Encoding): number
+
+  /**
+   * Identical to {@link Buffer#indexOf}, except the last occurrence of `value` is found rather than the first occurrence.
+   * @param value - What to search for.
+   * - If `value` is a string, `value` is interpreted according to the character encoding in `encoding`.
+   * - If `value` is a `Buffer` or `Uint8Array`, `value` will be used in its entirety. To compare a partial Buffer, use {@link Buffer#subarray}.
+   * - If `value` is a number, it will be coerced to a valid byte value, an integer between `0` and `255`.
+   * - If `value` is an empty string or empty `Buffer`, `byteOffset` will be returned.
+   * @param byteOffset - Where to begin searching in `buf`. Default: `buf.length - 1`.
+   * - If negative, then offset is calculated from the end of `buf`.
+   * - If not a integer, it will be coerced to integer by `_.toSafeInteger`.
+   * @param encoding - The encoding of `value`. Default: `'utf8'`.
+   * @returns
+   * - The index of the last occurrence of `value` in `buf`
+   * - `-1` if `buf` does not contain `value`.
+   * @throws
+   * - If `value` is not a string, number, or `Buffer`, this method will throw a `TypeError`.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf = Buffer.from('this buffer is a buffer')
+   *
+   *   console.log(buf.lastIndexOf('this')) // Prints: 0
+   *   console.log(buf.lastIndexOf('buffer')) // Prints: 17
+   *   console.log(buf.lastIndexOf('buffer', 5)) // Prints: 5
+   *   console.log(buf.lastIndexOf('buffer', 4)) // Prints: -1
+   *
+   *   const utf16Buffer = Buffer.from('\u039a\u0391\u03a3\u03a3\u0395', 'utf16le')
+   *   console.log(utf16Buffer.lastIndexOf('\u03a3', undefined, 'utf16le')) // Prints: 6
+   *   console.log(utf16Buffer.lastIndexOf('\u03a3', -5, 'utf16le')) // Prints: 4
+   * })()
+   * ```
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const b = Buffer.from('abcdef')
+   *
+   *   // Passing a byteOffset that coerces to NaN.
+   *   // Prints: 1, searching the whole buffer.
+   *   console.log(b.lastIndexOf('b', undefined))
+   *   console.log(b.lastIndexOf('b', {}))
+   *
+   *   // Passing a byteOffset that coerces to 0.
+   *   // Prints: -1, equivalent to passing 0.
+   *   console.log(b.lastIndexOf('b', null))
+   *   console.log(b.lastIndexOf('b', []))
+   * })()
+   * ```
+   */
   lastIndexOf (value: string, byteOffset: number, encoding?: Encoding): number
 
   /**
@@ -1451,17 +1608,9 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    *
    *   const buf = Buffer.from('this buffer is a buffer')
    *
-   *   console.log(buf.lastIndexOf('this')) // Prints: 0
-   *   console.log(buf.lastIndexOf('buffer')) // Prints: 17
    *   console.log(buf.lastIndexOf(Buffer.from('buffer'))) // Prints: 17
    *   console.log(buf.lastIndexOf(97)) // Prints: 15 (97 is the decimal ASCII value for 'a')
    *   console.log(buf.lastIndexOf(Buffer.from('yolo'))) // Prints: -1
-   *   console.log(buf.lastIndexOf('buffer', 5)) // Prints: 5
-   *   console.log(buf.lastIndexOf('buffer', 4)) // Prints: -1
-   *
-   *   const utf16Buffer = Buffer.from('\u039a\u0391\u03a3\u03a3\u0395', 'utf16le')
-   *   console.log(utf16Buffer.lastIndexOf('\u03a3', undefined, 'utf16le')) // Prints: 6
-   *   console.log(utf16Buffer.lastIndexOf('\u03a3', -5, 'utf16le')) // Prints: 4
    * })()
    * ```
    * @example
@@ -1475,38 +1624,11 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    *   // Prints: 2, equivalent to searching for 99 or 'c'.
    *   console.log(b.lastIndexOf(99.9))
    *   console.log(b.lastIndexOf(256 + 99))
-   *
-   *   // Passing a byteOffset that coerces to NaN.
-   *   // Prints: 1, searching the whole buffer.
-   *   console.log(b.lastIndexOf('b', undefined))
-   *   console.log(b.lastIndexOf('b', {}))
-   *
-   *   // Passing a byteOffset that coerces to 0.
-   *   // Prints: -1, equivalent to passing 0.
-   *   console.log(b.lastIndexOf('b', null))
-   *   console.log(b.lastIndexOf('b', []))
    * })()
    * ```
    */
-  lastIndexOf (value: Buffer | Uint8Array | number, byteOffset?: number): number
+  lastIndexOf (value: this | Uint8Array | number, byteOffset?: number): number
 
-  /**
-   * Identical to {@link Buffer#indexOf}, except the last occurrence of `value` is found rather than the first occurrence.
-   * @param value - What to search for.
-   * - If `value` is a string, `value` is interpreted according to the character encoding in `encoding`.
-   * - If `value` is a `Buffer` or `Uint8Array`, `value` will be used in its entirety. To compare a partial Buffer, use {@link Buffer#subarray}.
-   * - If `value` is a number, it will be coerced to a valid byte value, an integer between `0` and `255`.
-   * - If `value` is an empty string or empty `Buffer`, `byteOffset` will be returned.
-   * @param byteOffset - Where to begin searching in `buf`. Default: `buf.length - 1`.
-   * - If negative, then offset is calculated from the end of `buf`.
-   * - If not a integer, it will be coerced to integer by `_.toSafeInteger`.
-   * @param encoding - The encoding of `value`. Default: `'utf8'`.
-   * @returns
-   * - The index of the last occurrence of `value` in `buf`
-   * - `-1` if `buf` does not contain `value`.
-   * @throws
-   * - If `value` is not a string, number, or `Buffer`, this method will throw a `TypeError`.
-   */
   lastIndexOf (value: any, byteOffset: any = this.length - 1, encoding: Encoding = 'utf8'): number {
     if (Buffer.isEncoding(byteOffset)) [byteOffset, encoding] = [this.length - 1, byteOffset]
     byteOffset = _.toNumber(byteOffset)
@@ -1586,7 +1708,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
 
   /**
    * Alias of {@link Buffer.readBigUInt64BE}.
-   * @group Method Aliases
+   * @group Alias Methods
    */
   get readBigUint64BE (): this['readBigUInt64BE'] { return this.readBigUInt64BE }
 
@@ -1609,7 +1731,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
 
   /**
    * Alias of {@link Buffer.readBigUInt64LE}.
-   * @group Method Aliases
+   * @group Alias Methods
    */
   get readBigUint64LE (): this['readBigUInt64LE'] { return this.readBigUInt64LE }
 
@@ -1825,7 +1947,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
 
   /**
    * Alias of {@link Buffer.readUInt8}.
-   * @group Method Aliases
+   * @group Alias Methods
    */
   get readUint8 (): this['readUInt8'] { return this.readUInt8 }
 
@@ -1849,7 +1971,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
 
   /**
    * Alias of {@link Buffer.readUInt16BE}.
-   * @group Method Aliases
+   * @group Alias Methods
    */
   get readUint16BE (): this['readUInt16BE'] { return this.readUInt16BE }
 
@@ -1873,7 +1995,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
 
   /**
    * Alias of {@link Buffer.readUInt16LE}.
-   * @group Method Aliases
+   * @group Alias Methods
    */
   get readUint16LE (): this['readUInt16LE'] { return this.readUInt16LE }
 
@@ -1896,7 +2018,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
 
   /**
    * Alias of {@link Buffer.readUInt32BE}.
-   * @group Method Aliases
+   * @group Alias Methods
    */
   get readUint32BE (): this['readUInt32BE'] { return this.readUInt32BE }
 
@@ -1919,7 +2041,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
 
   /**
    * Alias of {@link Buffer.readUInt32LE}.
-   * @group Method Aliases
+   * @group Alias Methods
    */
   get readUint32LE (): this['readUInt32LE'] { return this.readUInt32LE }
 
@@ -1960,7 +2082,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
 
   /**
    * Alias of {@link Buffer.readUIntBE}.
-   * @group Method Aliases
+   * @group Alias Methods
    */
   get readUintBE (): this['readUIntBE'] { return this.readUIntBE }
 
@@ -2001,7 +2123,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
 
   /**
    * Alias of {@link Buffer.readUIntLE}.
-   * @group Method Aliases
+   * @group Alias Methods
    */
   get readUintLE (): this['readUIntLE'] { return this.readUIntLE }
 
@@ -2103,6 +2225,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * Modifying the new `Buffer` slice will modify the memory in the original `Buffer` because the allocated memory of the two objects overlap.
    *
    * Specifying negative indexes causes the slice to be generated relative to the end of `buf` rather than the beginning.
+   * @group Methods
    * @param start - Where the new `Buffer` will start. Default: `0`.
    * @param end - Where the new `Buffer` will end (not inclusive). Default: `buf.length`.
    * @example
@@ -2136,13 +2259,11 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * })()
    * ```
    */
-  subarray (start: number = 0, end: number = this.length): Buffer {
-    const buf = super.subarray(start, end)
-    return new Buffer(buf.buffer, buf.byteOffset, buf.byteLength)
-  }
+  declare subarray: (start?: number, end?: number) => this
 
   /**
    * Returns a copy of a portion of a `Buffer` into a new `Buffer` object selected from `start` to `end` (`end` not included) where `start` and `end` represent the index of items in that `buf`. The original `Buffer` will not be modified.
+   * @group Methods
    * @param start - Where the new `Buffer` will start. Default: `0`.
    * @param end - Where the new `Buffer` will end (not inclusive). Default: `buf.length`.
    * @remarks This method is different from Node.js's `Buffer.slice()` method.
@@ -2159,9 +2280,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * })()
    * ```
    */
-  slice (start: number = 0, end: number = this.length): Buffer {
-    return new Buffer(super.slice(start, end).buffer)
-  }
+  declare slice: (start?: number, end?: number) => this
 
   /**
    * Interprets `buf` as an array of unsigned 16-bit integers and swaps the byte order in-place.
@@ -2296,6 +2415,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
 
   /**
    * The method reverses a `Buffer` in place and returns the reference to the same `Buffer`, the first element now becoming the last, and the last element becoming the first. In other words, elements order in the `Buffer` will be turned towards the direction opposite to that previously stated.
+   * @group Methods
    * @example
    * ```js
    * ;(async function () {
@@ -2307,10 +2427,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * })()
    * ```
    */
-  reverse (): this {
-    super.reverse()
-    return this
-  }
+  declare reverse: () => this
 
   /**
    * The method is the copying counterpart of the `reverse()` method. It returns a new `Buffer` with the elements in reversed order.
@@ -2327,7 +2444,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * })()
    * ```
    */
-  toReversed (): Buffer {
+  toReversed (): this {
     return this.slice().reverse()
   }
 
@@ -2530,7 +2647,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
 
   /**
    * Alias of {@link Buffer.writeBigUInt64BE}.
-   * @group Method Aliases
+   * @group Alias Methods
    */
   get writeBigUint64BE (): this['writeBigUInt64BE'] { return this.writeBigUInt64BE }
 
@@ -2556,7 +2673,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
 
   /**
    * Alias of {@link Buffer.writeBigUInt64LE}.
-   * @group Method Aliases
+   * @group Alias Methods
    */
   get writeBigUint64LE (): this['writeBigUInt64LE'] { return this.writeBigUInt64LE }
 
@@ -2854,7 +2971,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
 
   /**
    * Alias of {@link Buffer.writeUInt8}.
-   * @group Method Aliases
+   * @group Alias Methods
    */
   get writeUint8 (): this['writeUInt8'] { return this.writeUInt8 }
 
@@ -2881,7 +2998,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
 
   /**
    * Alias of {@link Buffer.writeUInt16BE}.
-   * @group Method Aliases
+   * @group Alias Methods
    */
   get writeUint16BE (): this['writeUInt16BE'] { return this.writeUInt16BE }
 
@@ -2908,7 +3025,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
 
   /**
    * Alias of {@link Buffer.writeUInt16LE}.
-   * @group Method Aliases
+   * @group Alias Methods
    */
   get writeUint16LE (): this['writeUInt16LE'] { return this.writeUInt16LE }
 
@@ -2934,7 +3051,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
 
   /**
    * Alias of {@link Buffer.writeUInt32BE}.
-   * @group Method Aliases
+   * @group Alias Methods
    */
   get writeUint32BE (): this['writeUInt32BE'] { return this.writeUInt32BE }
 
@@ -2960,7 +3077,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
 
   /**
    * Alias of {@link Buffer.writeUInt32LE}.
-   * @group Method Aliases
+   * @group Alias Methods
    */
   get writeUint32LE (): this['writeUInt32LE'] { return this.writeUInt32LE }
 
@@ -3013,7 +3130,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
 
   /**
    * Alias of {@link Buffer.writeUIntBE}.
-   * @group Method Aliases
+   * @group Alias Methods
    */
   get writeUintBE (): this['writeUIntBE'] { return this.writeUIntBE }
 
@@ -3066,7 +3183,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
 
   /**
    * Alias of {@link Buffer.writeUIntLE}.
-   * @group Method Aliases
+   * @group Alias Methods
    */
   get writeUintLE (): this['writeUIntLE'] { return this.writeUIntLE }
 
@@ -3169,7 +3286,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * })()
    * ```
    */
-  toNoted (): Buffer {
+  toNoted (): this {
     return this.slice().not()
   }
 
@@ -3232,7 +3349,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * })()
    * ```
    */
-  toOred (other: Buffer): Buffer {
+  toOred (other: Buffer): this {
     return this.slice().or(other)
   }
 
@@ -3295,7 +3412,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * })()
    * ```
    */
-  toAnded (other: Buffer): Buffer {
+  toAnded (other: Buffer): this {
     return this.slice().and(other)
   }
 
@@ -3358,7 +3475,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * })()
    * ```
    */
-  toXored (other: Buffer): Buffer {
+  toXored (other: Buffer): this {
     return this.slice().xor(other)
   }
 
@@ -3425,6 +3542,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
 
   /**
    * The method sorts the elements of a `Buffer` in place and returns the reference to the same `Buffer`, now sorted.
+   * @group Methods
    * @param compareFn - A function that determines the order of the elements. The function is called with the following arguments:
    * - `a`: The first element for comparison.
    * - `b`: The second element for comparison.
@@ -3448,10 +3566,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * })()
    * ```
    */
-  sort (compareFn?: (a: number, b: number) => any): this {
-    super.sort(compareFn)
-    return this
-  }
+  declare sort: (compareFn?: (a: number, b: number) => any) => this
 
   /**
    * The method is the copying version of the `sort()` method. It returns a new `Buffer` with the elements sorted in ascending order.
@@ -3476,7 +3591,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * })()
    * ```
    */
-  toSorted (compareFn?: (a: number, b: number) => any): Buffer {
+  toSorted (compareFn?: (a: number, b: number) => any): this {
     return this.slice().sort(compareFn)
   }
 
@@ -3497,11 +3612,32 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * })()
    * ```
    */
-  with (index: number, value: number): Buffer {
+  with (index: number, value: number): this {
     const buf = this.slice()
     buf[index] = value
     return buf
   }
+
+  /**
+   * The static method creates a new `Buffer` from a variable number of arguments.
+   * @group Static Methods
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf1 = Buffer.of(1)
+   *   console.log(buf1.toString('hex')) // Prints: 01
+   *
+   *   const buf2 = Buffer.of("1", "2", "3")
+   *   console.log(buf2.toString('hex')) // Prints: 010203
+   *
+   *   const buf3 = Buffer.of(undefined)
+   *   console.log(buf3.toString('hex')) // Prints: 01
+   * })()
+   * ```
+   */
+  declare static of: (...items: any[]) => Buffer
 }
 
 interface PackFromContext {
@@ -3824,17 +3960,12 @@ type OrValueOf<T> = T | { valueOf: () => T }
 type ReplaceReturnType<T extends (...a: any) => any, TNewReturn> = (...a: Parameters<T>) => TNewReturn
 
 /** Incompatible functions compare with NodeJS.Buffer */
-type KeysIncompatible = 'fill'
-
-/** Functions that return new Buffer */
-type KeysOverrideReturnNewBuffer = 'subarray' | 'slice'
+type KeysIncompatible = 'every' | 'fill' | 'filter' | 'find' | 'findIndex' | 'findLast' | 'findLastIndex' | 'forEach' | 'map' | 'reduce' | 'reduceRight' | 'some'
 
 /** Functions that return this */
-type KeysOverrideReturnThis = 'copyWithin' | 'reverse' | 'sort' | 'swap16' | 'swap32' | 'swap64' | 'writeBigInt64BE' | 'writeBigInt64LE' | 'writeBigUint64BE' | 'writeBigUint64LE' | 'writeBigUInt64BE' | 'writeBigUInt64LE' | 'writeDoubleBE' | 'writeDoubleLE' | 'writeFloatBE' | 'writeFloatLE' | 'writeInt8' | 'writeInt16BE' | 'writeInt16LE' | 'writeInt32BE' | 'writeInt32LE' | 'writeIntBE' | 'writeIntLE' | 'writeUint8' | 'writeUint16BE' | 'writeUint16LE' | 'writeUint32BE' | 'writeUint32LE' | 'writeUInt8' | 'writeUInt16BE' | 'writeUInt16LE' | 'writeUInt32BE' | 'writeUInt32LE' | 'writeUintBE' | 'writeUIntBE' | 'writeUintLE' | 'writeUIntLE'
+type KeysReplaceReturnThis = 'copyWithin' | 'reverse' | 'slice' | 'sort' | 'subarray' | 'swap16' | 'swap32' | 'swap64' | 'valueOf' | 'writeBigInt64BE' | 'writeBigInt64LE' | 'writeBigUint64BE' | 'writeBigUint64LE' | 'writeBigUInt64BE' | 'writeBigUInt64LE' | 'writeDoubleBE' | 'writeDoubleLE' | 'writeFloatBE' | 'writeFloatLE' | 'writeInt8' | 'writeInt16BE' | 'writeInt16LE' | 'writeInt32BE' | 'writeInt32LE' | 'writeIntBE' | 'writeIntLE' | 'writeUint8' | 'writeUint16BE' | 'writeUint16LE' | 'writeUint32BE' | 'writeUint32LE' | 'writeUInt8' | 'writeUInt16BE' | 'writeUInt16LE' | 'writeUInt32BE' | 'writeUInt32LE' | 'writeUintBE' | 'writeUIntBE' | 'writeUintLE' | 'writeUIntLE'
 
-type INodeBuffer = Omit<NodeBuffer, KeysIncompatible | KeysOverrideReturnNewBuffer | KeysOverrideReturnThis> & {
+type INodeBuffer = Omit<NodeBuffer, KeysIncompatible | KeysReplaceReturnThis> & {
   // @ts-expect-error ts(2526)
-  [K in KeysOverrideReturnThis]: ReplaceReturnType<NodeBuffer[K], this>
-} & {
-  [K in KeysOverrideReturnNewBuffer]: ReplaceReturnType<NodeBuffer[K], INodeBuffer>
+  [K in KeysReplaceReturnThis]: ReplaceReturnType<NodeBuffer[K], this>
 }
