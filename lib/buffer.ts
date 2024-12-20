@@ -153,7 +153,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * ;(async function () {
    *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
-   *   const buf1 = new Buffer([21, 31])
+   *   const buf1 = Buffer.of(21, 31)
    *   console.log(buf1.toString('hex')) // Prints: 151f
    *
    *   const buf2 = new Buffer(new Uint16Array([0x1234, 0x5678]))
@@ -449,10 +449,10 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * ;(async function () {
    *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
    *
-   *   console.log(Buffer.equals(new Buffer([1, 2]), Buffer.from('0102', 'hex'))) // true
-   *   console.log(Buffer.equals(Buffer.from(new Uint8Array([1, 2])), Buffer.from('0102', 'hex'))) // true
-   *   console.log(Buffer.equals(new Uint8Array([1, 2]), Buffer.from('0102', 'hex'))) // false
-   *   console.log(Buffer.equals(1, new Uint8Array([1, 2]))) // false
+   *   console.log(Buffer.equals(Buffer.of(1, 2), Buffer.from('0102', 'hex'))) // true
+   *   console.log(Buffer.equals(Buffer.from(Uint8Array.of(1, 2)), Buffer.from('0102', 'hex'))) // true
+   *   console.log(Buffer.equals(Uint8Array.of(1, 2), Buffer.from('0102', 'hex'))) // false
+   *   console.log(Buffer.equals(1, Uint8Array.of(1, 2))) // false
    *   console.log(Buffer.equals('', new Buffer(2))) // false
    * })()
    * ```
@@ -3633,11 +3633,445 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    *   console.log(buf2.toString('hex')) // Prints: 010203
    *
    *   const buf3 = Buffer.of(undefined)
-   *   console.log(buf3.toString('hex')) // Prints: 01
+   *   console.log(buf3.toString('hex')) // Prints: 00
    * })()
    * ```
    */
   declare static of: (...items: any[]) => Buffer
+
+  /**
+   * Takes an integer value and returns the item at that index, allowing for positive and negative integers. Negative integers count back from the last item in the `Buffer`.
+   * @group Methods
+   * @param index - Zero-based index of the `Buffer` element to be returned, converted to an integer. Negative index counts back from the end of the `Buffer` — if `index < 0`, `index + array.length` is accessed.
+   * @returns The element in the `Buffer` matching the given index. Always returns `undefined` if `index < -array.length` or `index >= array.length` without attempting to access the corresponding property.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf = Buffer.of(1, 2, 4, 7, 11, 18)
+   *   console.log(buf.at(-1)) // Expected output: 18
+   *   console.log(buf[buf.length - 1]) // Expected output: 18
+   * })()
+   * ```
+   */
+  declare at: (index: number) => number | undefined
+
+  /**
+   * Tests whether all elements in the `Buffer` pass the test implemented by the provided function.
+   * @group Methods
+   * @param callbackFn - A function to execute for each element in the `Buffer`. It should return a truthy value to indicate the element passes the test, and a falsy value otherwise. The function is called with the following arguments:
+   * - `value`: The current element being processed in the `Buffer`.
+   * - `index`: The index of the current element being processed in the `Buffer`.
+   * - `array`: The `Buffer` `every()` was called upon.
+   * @param thisArg - A value to use as this when executing `callbackFn`.
+   * @returns `true` unless `callbackFn` returns a falsy value for a `Buffer` element, in which case `false` is immediately returned.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   console.log(Buffer.of(12, 5, 8, 130, 44).every(v => v >= 10)) // print: false
+   *   console.log(Buffer.of(12, 54, 18, 130, 44).every(v => v >= 10)) // print: true
+   * })()
+   * ```
+   */
+  declare every: (callbackFn: (value: number, index: number, array: this) => unknown, thisArg?: any) => boolean
+
+  /**
+   * Creates a copy of a portion of a given `Buffer`, filtered down to just the elements from the given `Buffer` that pass the test implemented by the provided function.
+   * @group Methods
+   * @param callbackFn - A function to execute for each element in the `Buffer`. It should return a truthy value to keep the element in the resulting `Buffer`, and a falsy value otherwise. The function is called with the following arguments:
+   * - `value`: The current element being processed in the `Buffer`.
+   * - `index`: The index of the current element being processed in the `Buffer`.
+   * - `array`: The `Buffer` `filter()` was called upon.
+   * @param thisArg - A value to use as this when executing `callbackFn`.
+   * @returns A copy of the given `Buffer` containing just the elements that pass the test. If no elements pass the test, an empty `Buffer` is returned.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf = Buffer.of(12, 5, 8, 130, 44).filter(v => v >= 10)
+   *   console.log(buf.toString('hex')) // Expected output: "0c822c"
+   * })()
+   * ```
+   */
+  declare filter: (callbackFn: (value: number, index: number, array: this) => any, thisArg?: any) => this
+
+  /**
+   * Returns the first element in the provided `Buffer` that satisfies the provided testing function. If no values satisfy the testing function, `undefined` is returned.
+   * @group Methods
+   * @param callbackFn - A function to execute for each element in the `Buffer`. It should return a truthy value to indicate a matching element has been found, and a falsy value otherwise. The function is called with the following arguments:
+   * - `value`: The current element being processed in the `Buffer`.
+   * - `index`: The index of the current element being processed in the `Buffer`.
+   * - `array`: The `Buffer` `find()` was called upon.
+   * @param thisArg - A value to use as this when executing `callbackFn`.
+   * @returns The first element in the `Buffer` that satisfies the provided testing function. Otherwise, `undefined` is returned.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   function isPrime(element, index, array) {
+   *     let start = 2;
+   *     while (start <= Math.sqrt(element)) {
+   *       if (element % start++ < 1) {
+   *         return false;
+   *       }
+   *     }
+   *     return element > 1;
+   *   }
+   *
+   *   const buf = Buffer.of(4, 5, 8, 12)
+   *   console.log(buf.find(isPrime)) // Expected output: 5
+   * })()
+   * ```
+   */
+  declare find: (callbackFn: (value: number, index: number, array: this) => any, thisArg?: any) => number | undefined
+
+  /**
+   * Returns the index of the first element in the `Buffer` that satisfies the provided testing function. If no elements satisfy the testing function, `-1` is returned.
+   * @group Methods
+   * @param callbackFn - A function to execute for each element in the `Buffer`. It should return a truthy value to indicate a matching element has been found, and a falsy value otherwise. The function is called with the following arguments:
+   * - `value`: The current element being processed in the `Buffer`.
+   * - `index`: The index of the current element being processed in the `Buffer`.
+   * - `array`: The `Buffer` `findIndex()` was called upon.
+   * @param thisArg - A value to use as this when executing `callbackFn`.
+   * @returns The index of the first element in the `Buffer` that passes the test. Otherwise, `-1`.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   function isPrime(element, index, array) {
+   *     let start = 2;
+   *     while (start <= Math.sqrt(element)) {
+   *       if (element % start++ < 1) {
+   *         return false;
+   *       }
+   *     }
+   *     return element > 1;
+   *   }
+   *
+   *   console.log(Buffer.of(4, 6, 8, 12).findIndex(isPrime)) // Expected output: -1
+   *   console.log(Buffer.of(4, 6, 7, 12).findIndex(isPrime)) // Expected output: 2
+   * })()
+   * ```
+   */
+  declare findIndex: (callbackFn: (value: number, index: number, array: this) => any, thisArg?: any) => number
+
+  /**
+   * Iterates the `Buffer` in reverse order and returns the value of the first element that satisfies the provided testing function. If no elements satisfy the testing function, undefined is returned.
+   * @group Methods
+   * @param callbackFn - A function to execute for each element in the `Buffer`. It should return a truthy value to indicate a matching element has been found, and a falsy value otherwise. The function is called with the following arguments:
+   * - `value`: The current element being processed in the `Buffer`.
+   * - `index`: The index of the current element being processed in the `Buffer`.
+   * - `array`: The `Buffer` `find()` was called upon.
+   * @param thisArg - A value to use as this when executing `callbackFn`.
+   * @returns The last (highest-index) element in the `Buffer` that satisfies the provided testing function; `undefined` if no matching element is found.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   function isPrime(element, index, array) {
+   *     let start = 2;
+   *     while (start <= Math.sqrt(element)) {
+   *       if (element % start++ < 1) {
+   *         return false;
+   *       }
+   *     }
+   *     return element > 1;
+   *   }
+   *
+   *   const buf1 = Buffer.of(4, 6, 8, 12)
+   *   console.log(buf1.findLast(isPrime)) // Expected output: undefined
+   *   const buf2 = Buffer.of(4, 5, 7, 8, 9, 11, 12)
+   *   console.log(buf2.findLast(isPrime)) // Expected output: 11
+   * })()
+   * ```
+   */
+  declare findLast: (callbackFn: (value: number, index: number, array: this) => any, thisArg?: any) => number | undefined
+
+  /**
+   * Iterates the `Buffer` in reverse order and returns the index of the first element that satisfies the provided testing function. If no elements satisfy the testing function, `-1` is returned.
+   * @group Methods
+   * @param callbackFn - A function to execute for each element in the `Buffer`. It should return a truthy value to indicate a matching element has been found, and a falsy value otherwise. The function is called with the following arguments:
+   * - `value`: The current element being processed in the `Buffer`.
+   * - `index`: The index of the current element being processed in the `Buffer`.
+   * - `array`: The `Buffer` `findIndex()` was called upon.
+   * @param thisArg - A value to use as this when executing `callbackFn`.
+   * @returns The index of the last (highest-index) element in the `Buffer` that passes the test. Otherwise `-1` if no matching element is found.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   function isPrime(element, index, array) {
+   *     let start = 2;
+   *     while (start <= Math.sqrt(element)) {
+   *       if (element % start++ < 1) {
+   *         return false;
+   *       }
+   *     }
+   *     return element > 1;
+   *   }
+   *
+   *   console.log(Buffer.of(4, 6, 8, 12).findLastIndex(isPrime)) // Expected output: -1
+   *   console.log(Buffer.of(4, 5, 7, 8, 9, 11, 12).findLastIndex(isPrime)) // Expected output: 5
+   * })()
+   * ```
+   */
+  declare findLastIndex: (callbackFn: (value: number, index: number, array: this) => any, thisArg?: any) => number
+
+  /**
+   * Returns a string representing the elements of the `Buffer`. The elements are converted to strings using their toLocaleString methods and these strings are separated by a locale-specific string (such as a comma ",").
+   * @group Methods
+   * @param locales - A string with a BCP 47 language tag, or an array of such strings. For the general form and interpretation of the locales argument, see [the parameter description on the Intl main page](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl#locales_argument).
+   * @param options - An object with configuration properties. See [Number.prototype.toLocaleString()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/toLocaleString).
+   * @returns A string representing the elements of the `Buffer`.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf = Buffer.of(200, 50, 81, 12, 42)
+   *   console.log(buf.toLocaleString()) // Expected output: "200,50,81,12,42"
+   *   console.log(buf.toLocaleString('en-US')) // Expected output: "200,50,81,12,42"
+   *   console.log(buf.toLocaleString('ja-JP', { style: 'currency', currency: 'JPY' })) // Expected output: "￥200,￥50,￥81,￥12,￥42"
+   * })()
+   * ```
+   */
+  declare toLocaleString: (locales?: string | string[], options?: Intl.NumberFormatOptions) => string
+
+  /**
+   * Executes a provided function once for each `Buffer` element.
+   * @group Methods
+   * @param callbackfn - A function to execute for each element in the `Buffer`. Its return value is discarded. The function is called with the following arguments:
+   * - `value`: The current element being processed in the `Buffer`.
+   * - `index`: The index of the current element being processed in the `Buffer`.
+   * - `array`: The `Buffer` `forEach()` was called upon.
+   * @param thisArg - A value to use as `this` when executing `callbackfn`.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   Buffer.of(0, 1, 2, 3).forEach((element, index, array) => {
+   *     console.log(`a[${index}] = ${element}`)
+   *   })
+   *   // Logs:
+   *   // a[0] = 0
+   *   // a[1] = 1
+   *   // a[2] = 2
+   *   // a[3] = 3
+   * })()
+   * ```
+   */
+  declare forEach: (callbackfn: (value: number, index: number, array: this) => void, thisArg?: any) => void
+
+  /**
+   * Creates and returns a new string by concatenating all of the elements in this `Buffer`, separated by commas or a specified separator string. If the `Buffer` has only one item, then that item will be returned without using the separator.
+   * @group Methods
+   * @param separator - A string to separate each pair of adjacent elements of the `Buffer`. If omitted, the `Buffer` elements are separated with a comma `","`.
+   * @returns A string with all `Buffer` elements joined. If `buf.length` is 0, the empty string is returned.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf = Buffer.of(1, 2, 3)
+   *   console.log(buf.join()) // Expected output: "1,2,3"
+   *   console.log(buf.join(" / ")) // Expected output: "1 / 2 / 3"
+   *   console.log(buf.join('')) // Expected output: "123"
+   * })()
+   * ```
+   */
+  declare join: (separator?: string) => string
+
+  /**
+   * Creates a new `Buffer` populated with the results of calling a provided function on every element in the calling `Buffer`.
+   * @group Methods
+   * @param callbackfn - A function to execute for each element in the `Buffer`. Its return value is added as a single element in the new `Buffer`. The function is called with the following arguments:
+   * - `value`: The current element being processed in the `Buffer`.
+   * - `index`: The index of the current element being processed in the `Buffer`.
+   * - `array`: The `Buffer` `map()` was called upon.
+   * @param thisArg - A value to use as `this` when executing `callbackfn`.
+   * @returns A new `Buffer` with each element being the result of the callback function.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf = Buffer.of(1, 4, 9)
+   *   console.log(buf.map(Math.sqrt).toString('hex')) // Expected output: "010203"
+   *   console.log(buf.toString('hex')) // Expected output: "010409"
+   * })()
+   * ```
+   */
+  declare map: (callbackfn: (value: number, index: number, array: this) => number, thisArg?: any) => this
+
+  /**
+   * Stores multiple values in the `Buffer`, reading input values from a specified `array`.
+   * @group Methods
+   * @param array - The array from which to copy values. All values from the source `array` are copied into the `Buffer`, unless the length of the source `array` plus the target offset exceeds the length of the `Buffer`, in which case an exception is thrown. If the source `array` is a `Buffer`, the two arrays may share the same underlying ArrayBuffer; the JavaScript engine will intelligently copy the source range of the buffer to the destination range.
+   * @param offset - The offset into the `Buffer` at which to begin writing values from the source `array`. If this value is omitted, 0 is assumed (that is, the source `array` will overwrite values in the `Buffer` starting at index 0).
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf = new Buffer(8)
+   *   buf.set([1, 2, 3], 3)
+   *   console.log(buf.toString('hex')) // Expected output: "0000000102030000"
+   * })()
+   * ```
+   */
+  declare set: (array: this | Uint8Array | ArrayLike<number>, offset?: number) => void
+
+  /**
+   * Tests whether at least one element in the `Buffer` passes the test implemented by the provided function. It returns true if, in the `Buffer`, it finds an element for which the provided function returns true; otherwise it returns false. It doesn't modify the `Buffer`.
+   * @group Methods
+   * @param callbackFn - A function to execute for each element in the `Buffer`. It should return a truthy value to indicate the element passes the test, and a falsy value otherwise. The function is called with the following arguments:
+   * - `value`: The current element being processed in the `Buffer`.
+   * - `index`: The index of the current element being processed in the `Buffer`.
+   * - `array`: The `Buffer` `some()` was called upon.
+   * @param thisArg - A value to use as `this` when executing `callbackFn`.
+   * @returns `false` unless callbackFn returns a truthy value for a `Buffer` element, in which case `true` is immediately returned.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const isBiggerThan10 = (value, index, array) => value > 10
+   *   console.log(Buffer.of(2, 5, 8, 1, 4).some(isBiggerThan10)) // Expected output: false
+   *   console.log(Buffer.of(12, 5, 8, 1, 4).some(isBiggerThan10)) // Expected output: true
+   * })()
+   * ```
+   */
+  declare some: (callbackFn: (value: number, index: number, array: this) => any, thisArg?: any) => boolean
+
+  /**
+   * Returns a new array iterator object that contains the key/value pairs for each index in the `Buffer`.
+   * @group Methods
+   * @returns A new iterable iterator object.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf = Buffer.of(10, 20, 30, 40, 50)
+   *   for (const entry of buf.entries()) console.log(entry)
+   * })()
+   * ```
+   */
+  declare entries: () => ArrayIterator<[number, number]>
+
+  /**
+   * Returns a new array iterator object that contains the keys for each index in the `Buffer`.
+   * @group Methods
+   * @returns A new iterable iterator object.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf = Buffer.of(10, 20, 30, 40, 50)
+   *   for (const key of buf.keys()) console.log(key)
+   * })()
+   * ```
+   */
+  declare keys: () => ArrayIterator<number>
+
+  /**
+   * Returns a new array iterator object that iterates the value of each item in the `Buffer`.
+   * @group Methods
+   * @returns A new iterable iterator object.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf1 = Buffer.of(10, 20, 30, 40, 50)
+   *   for (const n of buf1.values()) console.log(n)
+   *
+   *   const values = buf1.values()
+   *   console.log(values.next().value) // Expected output: 10
+   *   console.log(values.next().value) // Expected output: 20
+   *   console.log(values.next().value) // Expected output: 30
+   *   console.log(values.next().value) // Expected output: 40
+   *   console.log(values.next().value) // Expected output: 50
+   * })()
+   * ```
+   */
+  declare values: () => ArrayIterator<number>
+
+  /**
+   * Implements the iterable protocol and allows `Buffer` to be consumed by most syntaxes expecting iterables, such as the spread syntax and for...of loops. It returns an array iterator object that yields the value of each index in the `Buffer`.
+   * @group Methods
+   * @returns A new iterable iterator object that yields the value of each index in the `Buffer`.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf1 = Buffer.of(10, 20, 30, 40, 50)
+   *   for (const n of buf1) console.log(n)
+   *
+   *   const values = buf1[Symbol.iterator]()
+   *   console.log(values.next().value) // Expected output: 10
+   *   console.log(values.next().value) // Expected output: 20
+   *   console.log(values.next().value) // Expected output: 30
+   *   console.log(values.next().value) // Expected output: 40
+   *   console.log(values.next().value) // Expected output: 50
+   * })()
+   * ```
+   */
+  declare [Symbol.iterator]: () => ArrayIterator<number>
+
+  /**
+   * Calls the specified callback function for all the elements in an array. The return value of
+   * the callback function is the accumulated result, and is provided as an argument in the next
+   * call to the callback function.
+   * @group Methods
+   * @param callbackfn - A function that accepts up to four arguments. The reduce method calls the `callbackfn` function one time for each element in the array.
+   * @param initialValue - If `initialValue` is specified, it is used as the initial value to start the accumulation. The first call to the `callbackfn` function provides this value as an argument instead of an array value.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf = Buffer.of(0, 1, 2, 3)
+   *   const result = buf.reduce((accumulator, currentValue) => accumulator + currentValue)
+   *   console.log(`result = ${result}`) // result = 6
+   * })()
+   * ```
+   */
+  declare reduce: <T=number> (callbackfn: (previousValue: T, currentValue: number, currentIndex: number, array: this) => T, initialValue?: T) => T
+
+  /**
+   * Calls the specified callback function for all the elements in an array, in descending order.
+   * The return value of the callback function is the accumulated result, and is provided as an
+   * argument in the next call to the callback function.
+   * @group Methods
+   * @param callbackfn - A function that accepts up to four arguments. The reduceRight method calls
+   * the `callbackfn` function one time for each element in the array.
+   * @param initialValue - If `initialValue` is specified, it is used as the initial value to start
+   * the accumulation. The first call to the `callbackfn` function provides this value as an argument
+   * instead of an array value.
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const buf = Buffer.of(10, 20, 30)
+   *   const result = buf.reduceRight((accumulator, currentValue) => `${accumulator}, ${currentValue}`)
+   *   console.log(result) // Expected output: "30, 20, 10"
+   * })()
+   * ```
+   */
+  declare reduceRight: <T=number> (callbackfn: (previousValue: T, currentValue: number, currentIndex: number, array: this) => T, initialValue?: T) => T
 }
 
 interface PackFromContext {
