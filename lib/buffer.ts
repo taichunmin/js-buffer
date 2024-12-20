@@ -957,7 +957,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
   }
 
   /**
-   * Unpack from the `buf` (presumably packed by `pack(format, ...))` according to the format string `format`. The result is a tuple even if it contains exactly one item. The `buf`’s size in bytes must larger then the size required by the `format`, as reflected by {@link Buffer.packCalcSize}.
+   * Unpack from the `buf` (presumably packed by `pack(format, ...)`) according to the format string `format`. The result is a tuple even if it contains exactly one item. The `buf`’s size in bytes must larger then the size required by the `format`, as reflected by {@link Buffer.packCalcSize}.
    * @param buf - A `Buffer` to unpack from.
    * @param format - A format string. Please refer to {@link Buffer.packParseFormat} for more information.
    * @remarks Unlike Python struct, this method does not support native size and alignment (that wouldn't make much sense in a javascript). Instead, specify byte order and emit pad bytes explicitly.
@@ -4072,6 +4072,172 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * ```
    */
   declare reduceRight: <T=number> (callbackfn: (previousValue: T, currentValue: number, currentIndex: number, array: this) => T, initialValue?: T) => T
+
+  /**
+   * Alias of {@link DataView.getBigInt64}.
+   */
+  getBigInt64 (byteOffset: number, littleEndian?: boolean): bigint {
+    return this.#dv.getBigInt64(byteOffset, littleEndian)
+  }
+
+  /**
+   * Alias of {@link DataView.getBigUint64}.
+   */
+  getBigUint64 (byteOffset: number, littleEndian?: boolean): bigint {
+    return this.#dv.getBigUint64(byteOffset, littleEndian)
+  }
+
+  /**
+   * Polyfill of [DataView.getFloat16](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView/getFloat16).
+   */
+  getFloat16 (byteOffset: number, littleEndian: boolean = false): number {
+    return littleEndian ? this.readFloat16LE(byteOffset) : this.readFloat16BE(byteOffset)
+  }
+
+  /**
+   * Alias of {@link DataView.getFloat32}.
+   */
+  getFloat32 (byteOffset: number, littleEndian?: boolean): number {
+    return this.#dv.getFloat32(byteOffset, littleEndian)
+  }
+
+  /**
+   * Alias of {@link DataView.getFloat64}.
+   */
+  getFloat64 (byteOffset: number, littleEndian?: boolean): number {
+    return this.#dv.getFloat64(byteOffset, littleEndian)
+  }
+
+  /**
+   * Alias of {@link DataView.getInt16}.
+   */
+  getInt16 (byteOffset: number, littleEndian?: boolean): number {
+    return this.#dv.getInt16(byteOffset, littleEndian)
+  }
+
+  /**
+   * Alias of {@link DataView.getInt32}.
+   */
+  getInt32 (byteOffset: number, littleEndian?: boolean): number {
+    return this.#dv.getInt32(byteOffset, littleEndian)
+  }
+
+  /**
+   * Alias of {@link DataView.getInt8}.
+   */
+  getInt8 (byteOffset: number): number {
+    return this.#dv.getInt8(byteOffset)
+  }
+
+  /**
+   * Alias of {@link DataView.getUint16}.
+   */
+  getUint16 (byteOffset: number, littleEndian?: boolean): number {
+    return this.#dv.getUint16(byteOffset, littleEndian)
+  }
+
+  /**
+   * Alias of {@link DataView.getUint32}.
+   */
+  getUint32 (byteOffset: number, littleEndian?: boolean): number {
+    return this.#dv.getUint32(byteOffset, littleEndian)
+  }
+
+  /**
+   * Alias of {@link DataView.getUint8}.
+   */
+  getUint8 (byteOffset: number): number {
+    return this.#dv.getUint8(byteOffset)
+  }
+
+  /**
+   * Alias of {@link DataView.setBigInt64}.
+   */
+  setBigInt64 (byteOffset: number, value: bigint, littleEndian?: boolean): this {
+    this.#dv.setBigInt64(byteOffset, value, littleEndian)
+    return this
+  }
+
+  /**
+   * Alias of {@link DataView.setBigUint64}.
+   */
+  setBigUint64 (byteOffset: number, value: bigint, littleEndian?: boolean): this {
+    this.#dv.setBigUint64(byteOffset, value, littleEndian)
+    return this
+  }
+
+  /**
+   * Polyfill of [DataView.setFloat16](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView/setFloat16).
+   */
+  setFloat16 (byteOffset: number, value: number, littleEndian: boolean = false): this {
+    if (littleEndian) this.writeFloat16LE(value, byteOffset)
+    else this.writeFloat16BE(value, byteOffset)
+    return this
+  }
+
+  /**
+   * Alias of {@link DataView.setFloat32}.
+   */
+  setFloat32 (byteOffset: number, value: number, littleEndian?: boolean): this {
+    this.#dv.setFloat32(byteOffset, value, littleEndian)
+    return this
+  }
+
+  /**
+   * Alias of {@link DataView.setFloat64}.
+   */
+  setFloat64 (byteOffset: number, value: number, littleEndian?: boolean): this {
+    this.#dv.setFloat64(byteOffset, value, littleEndian)
+    return this
+  }
+
+  /**
+   * Alias of {@link DataView.setInt16}.
+   */
+  setInt16 (byteOffset: number, value: number, littleEndian?: boolean): this {
+    this.#dv.setInt16(byteOffset, value, littleEndian)
+    return this
+  }
+
+  /**
+   * Alias of {@link DataView.setInt32}.
+   */
+  setInt32 (byteOffset: number, value: number, littleEndian?: boolean): this {
+    this.#dv.setInt32(byteOffset, value, littleEndian)
+    return this
+  }
+
+  /**
+   * Alias of {@link DataView.setInt8}.
+   */
+  setInt8 (byteOffset: number, value: number): this {
+    this.#dv.setInt8(byteOffset, value)
+    return this
+  }
+
+  /**
+   * Alias of {@link DataView.setUint16}.
+   */
+  setUint16 (byteOffset: number, value: number, littleEndian?: boolean): this {
+    this.#dv.setUint16(byteOffset, value, littleEndian)
+    return this
+  }
+
+  /**
+   * Alias of {@link DataView.setUint32}.
+   */
+  setUint32 (byteOffset: number, value: number, littleEndian?: boolean): this {
+    this.#dv.setUint32(byteOffset, value, littleEndian)
+    return this
+  }
+
+  /**
+   * Alias of {@link DataView.setUint8}.
+   */
+  setUint8 (byteOffset: number, value: number): this {
+    this.#dv.setUint8(byteOffset, value)
+    return this
+  }
 }
 
 interface PackFromContext {

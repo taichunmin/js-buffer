@@ -13,9 +13,9 @@
   },
   "groupOrder": [
     "Constructors",
-    "Properties",
     "Static Methods",
     "Methods",
+    "Alias Methods",
     "*"
   ]
 }

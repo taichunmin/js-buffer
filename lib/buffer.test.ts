@@ -1191,26 +1191,34 @@ describe('Buffer.byteLength()', () => {
 
 test('read/write BigInt64', () => {
   const buf = Buffer.alloc(10)
+
+  // big-endian
   expect(buf.writeBigInt64BE(1n).readBigInt64BE()).toBe(1n)
-  expect(buf.writeBigInt64LE(1n).readBigInt64LE()).toBe(1n)
   expect(buf.writeBigInt64BE(1n, 1).readBigInt64BE(1)).toBe(1n)
+  expect(buf.setBigInt64(0, 1n).getBigInt64(0)).toBe(1n)
+  expect(buf.setBigInt64(1, 1n).getBigInt64(1)).toBe(1n)
+
+  // little-endian
+  expect(buf.writeBigInt64LE(1n).readBigInt64LE()).toBe(1n)
   expect(buf.writeBigInt64LE(1n, 1).readBigInt64LE(1)).toBe(1n)
+  expect(buf.setBigInt64(0, 1n, true).getBigInt64(0, true)).toBe(1n)
+  expect(buf.setBigInt64(1, 1n, true).getBigInt64(1, true)).toBe(1n)
 })
 
 test('read/write BigUInt64', () => {
   const buf = Buffer.alloc(10)
-  expect(buf.writeBigUInt64BE(1n).readBigUInt64BE()).toBe(1n)
-  expect(buf.writeBigUInt64LE(1n).readBigUInt64LE()).toBe(1n)
-  expect(buf.writeBigUInt64BE(1n, 1).readBigUInt64BE(1)).toBe(1n)
-  expect(buf.writeBigUInt64LE(1n, 1).readBigUInt64LE(1)).toBe(1n)
-})
 
-test('read/write Double', () => {
-  const buf = Buffer.alloc(10)
-  expect(buf.writeDoubleBE(0.5).readDoubleBE()).toBe(0.5)
-  expect(buf.writeDoubleLE(0.5).readDoubleLE()).toBe(0.5)
-  expect(buf.writeDoubleBE(0.5, 1).readDoubleBE(1)).toBe(0.5)
-  expect(buf.writeDoubleLE(0.5, 1).readDoubleLE(1)).toBe(0.5)
+  // big-endian
+  expect(buf.writeBigUInt64BE(1n).readBigUInt64BE()).toBe(1n)
+  expect(buf.writeBigUInt64BE(1n, 1).readBigUInt64BE(1)).toBe(1n)
+  expect(buf.setBigUint64(0, 1n).getBigUint64(0)).toBe(1n)
+  expect(buf.setBigUint64(1, 1n).getBigUint64(1)).toBe(1n)
+
+  // little-endian
+  expect(buf.writeBigUInt64LE(1n).readBigUInt64LE()).toBe(1n)
+  expect(buf.writeBigUInt64LE(1n, 1).readBigUInt64LE(1)).toBe(1n)
+  expect(buf.setBigUint64(0, 1n, true).getBigUint64(0, true)).toBe(1n)
+  expect(buf.setBigUint64(1, 1n, true).getBigUint64(1, true)).toBe(1n)
 })
 
 describe('read/write Float16', () => {
@@ -1229,67 +1237,136 @@ describe('read/write Float16', () => {
   ])('Buffer.from("$hex", "hex").readFloat16BE() = $float', ({ hex, float }) => {
     expect(Buffer.from(hex, 'hex').readFloat16BE()).toBe(float)
     expect(new Buffer(2).writeFloat16BE(float).toString('hex')).toBe(hex)
+    expect(new Buffer(2).setFloat16(0, float).toString('hex')).toBe(hex)
   })
 
   test('read/write Float16', () => {
     const buf = Buffer.alloc(3)
+
+    // big-endian
     expect(buf.writeFloat16BE(-2).readFloat16BE()).toBe(-2)
-    expect(buf.writeFloat16LE(-2).readFloat16LE()).toBe(-2)
     expect(buf.writeFloat16BE(-2, 1).readFloat16BE(1)).toBe(-2)
+    expect(buf.setFloat16(0, -2).getFloat16(0)).toBe(-2)
+    expect(buf.setFloat16(1, -2).getFloat16(1)).toBe(-2)
+
+    // little-endian
+    expect(buf.writeFloat16LE(-2).readFloat16LE()).toBe(-2)
     expect(buf.writeFloat16LE(-2, 1).readFloat16LE(1)).toBe(-2)
+    expect(buf.setFloat16(0, -2, true).getFloat16(0, true)).toBe(-2)
+    expect(buf.setFloat16(1, -2, true).getFloat16(1, true)).toBe(-2)
   })
 })
 
 test('read/write Float', () => {
   const buf = Buffer.alloc(10)
+
+  // big-endian
   expect(buf.writeFloatBE(0.5).readFloatBE()).toBe(0.5)
-  expect(buf.writeFloatLE(0.5).readFloatLE()).toBe(0.5)
   expect(buf.writeFloatBE(0.5, 1).readFloatBE(1)).toBe(0.5)
+  expect(buf.setFloat32(0, 0.5).getFloat32(0)).toBe(0.5)
+  expect(buf.setFloat32(1, 0.5).getFloat32(1)).toBe(0.5)
+
+  // little-endian
+  expect(buf.writeFloatLE(0.5).readFloatLE()).toBe(0.5)
   expect(buf.writeFloatLE(0.5, 1).readFloatLE(1)).toBe(0.5)
+  expect(buf.setFloat32(0, 0.5, true).getFloat32(0, true)).toBe(0.5)
+  expect(buf.setFloat32(1, 0.5, true).getFloat32(1, true)).toBe(0.5)
+})
+
+test('read/write Double', () => {
+  const buf = Buffer.alloc(10)
+
+  // big-endian
+  expect(buf.writeDoubleBE(0.5).readDoubleBE()).toBe(0.5)
+  expect(buf.writeDoubleBE(0.5, 1).readDoubleBE(1)).toBe(0.5)
+  expect(buf.setFloat64(0, 0.5).getFloat64(0)).toBe(0.5)
+  expect(buf.setFloat64(1, 0.5).getFloat64(1)).toBe(0.5)
+
+  // little-endian
+  expect(buf.writeDoubleLE(0.5).readDoubleLE()).toBe(0.5)
+  expect(buf.writeDoubleLE(0.5, 1).readDoubleLE(1)).toBe(0.5)
+  expect(buf.setFloat64(0, 0.5, true).getFloat64(0, true)).toBe(0.5)
+  expect(buf.setFloat64(1, 0.5, true).getFloat64(1, true)).toBe(0.5)
 })
 
 test('read/write Int8', () => {
   const buf = Buffer.alloc(10)
-  expect(buf.writeInt8(1).readInt8()).toBe(1)
-  expect(buf.writeInt8(1, 1).readInt8(1)).toBe(1)
+  expect(buf.writeInt8(-1).readInt8()).toBe(-1)
+  expect(buf.writeInt8(-1, 1).readInt8(1)).toBe(-1)
+  expect(buf.setInt8(0, -1).getInt8(0)).toBe(-1)
+  expect(buf.setInt8(1, -1).getInt8(1)).toBe(-1)
 })
 
 test('read/write UInt8', () => {
   const buf = Buffer.alloc(10)
   expect(buf.writeUInt8(1).readUInt8()).toBe(1)
   expect(buf.writeUInt8(1, 1).readUInt8(1)).toBe(1)
+  expect(buf.setUint8(0, 1).getUint8(0)).toBe(1)
+  expect(buf.setUint8(1, 1).getUint8(1)).toBe(1)
 })
 
 test('read/write Int16', () => {
   const buf = Buffer.alloc(10)
+
+  // big-endian
   expect(buf.writeInt16BE(0x0102).readInt16BE()).toBe(0x0102)
-  expect(buf.writeInt16LE(0x0102).readInt16LE()).toBe(0x0102)
   expect(buf.writeInt16BE(0x0102, 1).readInt16BE(1)).toBe(0x0102)
+  expect(buf.setInt16(0, 0x0102).getInt16(0)).toBe(0x0102)
+  expect(buf.setInt16(1, 0x0102).getInt16(1)).toBe(0x0102)
+
+  // little-endian
+  expect(buf.writeInt16LE(0x0102).readInt16LE()).toBe(0x0102)
   expect(buf.writeInt16LE(0x0102, 1).readInt16LE(1)).toBe(0x0102)
+  expect(buf.setInt16(0, 0x0102, true).getInt16(0, true)).toBe(0x0102)
+  expect(buf.setInt16(1, 0x0102, true).getInt16(1, true)).toBe(0x0102)
 })
 
 test('read/write UInt16', () => {
   const buf = Buffer.alloc(10)
+
+  // big-endian
   expect(buf.writeUInt16BE(0x0102).readUInt16BE()).toBe(0x0102)
-  expect(buf.writeUInt16LE(0x0102).readUInt16LE()).toBe(0x0102)
   expect(buf.writeUInt16BE(0x0102, 1).readUInt16BE(1)).toBe(0x0102)
+  expect(buf.setUint16(0, 0x0102).getUint16(0)).toBe(0x0102)
+  expect(buf.setUint16(1, 0x0102).getUint16(1)).toBe(0x0102)
+
+  // little-endian
+  expect(buf.writeUInt16LE(0x0102).readUInt16LE()).toBe(0x0102)
   expect(buf.writeUInt16LE(0x0102, 1).readUInt16LE(1)).toBe(0x0102)
+  expect(buf.setUint16(0, 0x0102, true).getUint16(0, true)).toBe(0x0102)
+  expect(buf.setUint16(1, 0x0102, true).getUint16(1, true)).toBe(0x0102)
 })
 
 test('read/write Int32', () => {
   const buf = Buffer.alloc(10)
+
+  // big-endian
   expect(buf.writeInt32BE(0x01020304).readInt32BE()).toBe(0x01020304)
-  expect(buf.writeInt32LE(0x01020304).readInt32LE()).toBe(0x01020304)
   expect(buf.writeInt32BE(0x01020304, 1).readInt32BE(1)).toBe(0x01020304)
+  expect(buf.setInt32(0, 0x01020304).getInt32(0)).toBe(0x01020304)
+  expect(buf.setInt32(1, 0x01020304).getInt32(1)).toBe(0x01020304)
+
+  // little-endian
+  expect(buf.writeInt32LE(0x01020304).readInt32LE()).toBe(0x01020304)
   expect(buf.writeInt32LE(0x01020304, 1).readInt32LE(1)).toBe(0x01020304)
+  expect(buf.setInt32(0, 0x01020304, true).getInt32(0, true)).toBe(0x01020304)
+  expect(buf.setInt32(1, 0x01020304, true).getInt32(1, true)).toBe(0x01020304)
 })
 
 test('read/write UInt32', () => {
   const buf = Buffer.alloc(10)
+
+  // big-endian
   expect(buf.writeUInt32BE(0x01020304).readUInt32BE()).toBe(0x01020304)
-  expect(buf.writeUInt32LE(0x01020304).readUInt32LE()).toBe(0x01020304)
   expect(buf.writeUInt32BE(0x01020304, 1).readUInt32BE(1)).toBe(0x01020304)
+  expect(buf.setUint32(0, 0x01020304).getUint32(0)).toBe(0x01020304)
+  expect(buf.setUint32(1, 0x01020304).getUint32(1)).toBe(0x01020304)
+
+  // little-endian
+  expect(buf.writeUInt32LE(0x01020304).readUInt32LE()).toBe(0x01020304)
   expect(buf.writeUInt32LE(0x01020304, 1).readUInt32LE(1)).toBe(0x01020304)
+  expect(buf.setUint32(0, 0x01020304, true).getUint32(0, true)).toBe(0x01020304)
+  expect(buf.setUint32(1, 0x01020304, true).getUint32(1, true)).toBe(0x01020304)
 })
 
 describe('read/write Int', () => {
