@@ -1,6 +1,7 @@
-import _ from 'lodash'
-import { Buffer } from './buffer'
+import * as _ from 'lodash-es'
 import util from 'node:util'
+import { describe, expect, test, vi } from 'vitest'
+import { Buffer } from './buffer'
 
 describe('new Buffer', () => {
   test('0 arguments', () => {
@@ -1233,7 +1234,7 @@ describe('read/write Float16', () => {
     { hex: 'c000', float: -2 },
     { hex: 'fc00', float: -Infinity },
     { hex: '7e00', float: NaN },
-    { hex: 'fe00', float: -NaN },
+    { hex: 'fe00', float: -parseInt('') }, // prevent -NaN to be transformed to NaN
   ])('Buffer.from("$hex", "hex").readFloat16BE() = $float', ({ hex, float }) => {
     expect(Buffer.from(hex, 'hex').readFloat16BE()).toBe(float)
     expect(new Buffer(2).writeFloat16BE(float).toString('hex')).toBe(hex)
@@ -1687,7 +1688,7 @@ describe('Buffer.pack()', () => {
   })
 
   test('should throw error with format which packFromFn is missing', () => {
-    jest.spyOn(Buffer, 'packParseFormat').mockReturnValueOnce({ littleEndian: false, items: [[1, 'n']] })
+    vi.spyOn(Buffer, 'packParseFormat').mockReturnValueOnce({ littleEndian: false, items: [[1, 'n']] })
     expect.hasAssertions()
     try {
       const actual = new Buffer(1)
@@ -1754,7 +1755,7 @@ describe('Buffer.unpack()', () => {
   })
 
   test('should throw error with format which packFromFn is missing', () => {
-    jest.spyOn(Buffer, 'packParseFormat').mockReturnValueOnce({ littleEndian: false, items: [[1, 'n']] })
+    vi.spyOn(Buffer, 'packParseFormat').mockReturnValueOnce({ littleEndian: false, items: [[1, 'n']] })
     expect.hasAssertions()
     try {
       const actual = new Buffer(1)
@@ -1803,7 +1804,7 @@ describe('Buffer.unpack()', () => {
   test('should throw error with unknown format', () => {
     expect.hasAssertions()
     try {
-      jest.spyOn(Buffer, 'packParseFormat').mockReturnValueOnce({ littleEndian: false, items: [[1, 'z']] })
+      vi.spyOn(Buffer, 'packParseFormat').mockReturnValueOnce({ littleEndian: false, items: [[1, 'z']] })
       Buffer.unpack(Buffer.from('00', 'hex'), 'z')
     } catch (err) {
       expect(err.message).toMatch(/Unknown format/)
@@ -1843,7 +1844,7 @@ describe('Buffer.iterUnpack()', () => {
   test('should throw error with unknown format', () => {
     expect.hasAssertions()
     try {
-      jest.spyOn(Buffer, 'packParseFormat').mockReturnValueOnce({ littleEndian: false, items: [[1, 'z']] })
+      vi.spyOn(Buffer, 'packParseFormat').mockReturnValueOnce({ littleEndian: false, items: [[1, 'z']] })
       console.log([...Buffer.iterUnpack(Buffer.from('00', 'hex'), 'z')])
     } catch (err) {
       expect(err.message).toMatch(/Unknown format/)

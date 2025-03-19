@@ -134,14 +134,12 @@ out
 *.nojekyll
 *.test.ts
 *.xml
-/.eslintrc.*
+/.eslint*
 /*.config.js
 /benchmark
+/build-utils
 /dist/assets
 /tsconfig.json
 /tsdoc.json
 /tsup.config.ts
-/typedoc
 /typedoc.json
-dotenv.ts
-sitemap.ts

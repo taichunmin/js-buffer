@@ -1,8 +1,8 @@
-import _ from 'lodash'
+import * as _ from 'lodash-es'
 import { type Buffer as NodeBuffer } from 'node:buffer'
 
-const cachedDecoders: Record<string, TextDecoder> = {}
-const cachedEncoders: Record<string, TextEncoder> = {}
+const cachedDecoders: Record<string, typeof TextDecoder.prototype> = {}
+const cachedEncoders: Record<string, typeof TextEncoder.prototype> = {}
 const customBufferSymbol = Symbol.for('taichunmin.buffer')
 const customInspectSymbol = Symbol.for('nodejs.util.inspect.custom')
 const float16Buf = new DataView(new ArrayBuffer(4))

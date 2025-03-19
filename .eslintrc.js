@@ -1,7 +1,6 @@
 module.exports = {
   env: {
     es2022: true,
-    jest: true,
   },
   plugins: ['eslint-plugin-tsdoc'],
   extends: ['love'],

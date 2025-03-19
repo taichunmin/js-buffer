@@ -52,7 +52,7 @@ Using jsDelivr CDN:
 
 ```html
 <!-- script -->
-<script src="https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0"></script>
 <script>
   const { Buffer } = window?.taichunmin?.buffer
 </script>

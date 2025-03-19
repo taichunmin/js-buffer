@@ -1,6 +1,6 @@
 import { getSiteurl } from './dotenv'
 
-import _ from 'lodash'
+import * as _ from 'lodash-es'
 import { fileURLToPath } from 'url'
 import { promises as fsPromises } from 'fs'
 import dayjs from 'dayjs'
@@ -43,11 +43,11 @@ interface GenSitemapArgs {
 }
 
 export async function build (): Promise<void> {
-  const publicDir = path.resolve(__dirname, './dist')
+  const publicDir = path.resolve(__dirname, '../dist')
   await writeSitemapByUrls({
     baseurl: getSiteurl(),
     dist: publicDir,
-    urls: _.map(await fg('dist/**/*.html'), path => getSiteurl(path.slice(5))),
+    urls: _.map(await fg('dist/**/*.html'), filepath => getSiteurl(path.relative(publicDir, filepath))),
   })
 }
 
