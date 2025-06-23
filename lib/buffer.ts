@@ -405,17 +405,17 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * ```
    */
   static concat (list: Buffer[], totalLength?: number): Buffer {
-    if (!_.isArray(list)) throw new TypeError('"list" argument must be an array of Buffers')
-    if (_.isNil(totalLength)) totalLength = _.sumBy(list, 'length')
+    if (!_.isArray(list) || !_.every(list, this.isBuffer)) throw new TypeError('"list" argument must be an array of Buffers')
+    totalLength ??= _.sumBy(list, 'length')
     if (totalLength < 0) totalLength = 0
-    const buf = new Buffer(totalLength)
+    const buf1 = new Buffer(totalLength)
     let start = 0
-    for (let i = 0; i < list.length; i++) {
-      if (start + list[i].length > totalLength) list[i] = list[i].subarray(0, totalLength - start)
-      buf.set(list[i], start)
-      start += list[i].length
+    for (let buf of list) {
+      if (start + buf.length > totalLength) buf = buf.subarray(0, totalLength - start)
+      buf1.set(buf, start)
+      start += buf.length
     }
-    return buf
+    return buf1
   }
 
   /**
@@ -735,7 +735,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
     const bytesPerElement = (view as any)?.BYTES_PER_ELEMENT ?? 1
     const viewLength = view.byteLength / bytesPerElement
     if (offset < 0) offset = offset % viewLength + viewLength
-    if (_.isNil(length)) length = viewLength - offset
+    length ??= viewLength - offset
     return new Buffer(view.buffer, view.byteOffset + offset * bytesPerElement, length * bytesPerElement)
   }
 
@@ -942,7 +942,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
 
     const { littleEndian, items } = Buffer.packParseFormat(format)
     const lenRequired = Buffer.packCalcSize(items)
-    if (_.isNil(buf)) buf = new Buffer(lenRequired)
+    buf ??= new Buffer(lenRequired)
     if (!Buffer.isBuffer(buf)) throw new TypeError('Invalid type of buf')
     if (buf.length < lenRequired) throw new RangeError(`buf.length = ${buf.length}, lenRequired = ${lenRequired}`)
 
@@ -1359,29 +1359,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
   includes (value: this | Uint8Array | number, byteOffset?: number): boolean
 
   includes (value: any, byteOffset: any = 0, encoding: Encoding = 'utf8'): boolean {
-    if (Buffer.isEncoding(byteOffset)) [byteOffset, encoding] = [0, byteOffset]
-    byteOffset = _.toSafeInteger(byteOffset)
-    if (byteOffset < 0) byteOffset = this.length + byteOffset
-
-    if (_.isString(value)) value = Buffer.fromString(value, encoding)
-    else if (isInstance(value, Uint8Array)) value = Buffer.fromView(value)
-
-    if (Buffer.isBuffer(value)) { // try to convert Buffer to number
-      if (value.length === 0) return false
-      else if (value.length === 1) value = value[0]
-    }
-    if (_.isNumber(value)) {
-      value = _.toSafeInteger(value) & 0xFF
-      for (let i = byteOffset; i < this.length; i++) if (this[i] === value) return true
-      return false
-    }
-    const equalsAtOffset = (i: number): boolean => {
-      for (let j = 0; j < (value as Buffer).length; j++) if (this[i + j] !== (value as Buffer)[j]) return false
-      return true
-    }
-    const len = this.length - value.length + 1
-    for (let i = byteOffset; i < len; i++) if (equalsAtOffset(i)) return true
-    return false
+    return this.indexOf(value, byteOffset, encoding) !== -1
   }
 
   /**
@@ -1509,13 +1487,9 @@ export class Buffer extends Uint8Array implements INodeBuffer {
       for (let i = byteOffset; i < this.length; i++) if (this[i] === val) return i
       return -1
     }
-    const equalsAtOffset = (i: number): boolean => {
-      for (let j = 0; j < (val as Buffer).length; j++) if (this[i + j] !== (val as Buffer)[j]) return false
-      return true
-    }
-    const len = this.length - val.length + 1
-    for (let i = byteOffset; i < len; i++) if (equalsAtOffset(i)) return i
-    return -1
+
+    const idx = bufIndexOfBoyerMoore(this.subarray(byteOffset), val)
+    return idx === -1 ? -1 : idx + byteOffset
   }
 
   /**
@@ -1629,30 +1603,28 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    */
   lastIndexOf (value: this | Uint8Array | number, byteOffset?: number): number
 
-  lastIndexOf (value: any, byteOffset: any = this.length - 1, encoding: Encoding = 'utf8'): number {
+  lastIndexOf (val: any, byteOffset: any = this.length - 1, encoding: Encoding = 'utf8'): number {
     if (Buffer.isEncoding(byteOffset)) [byteOffset, encoding] = [this.length - 1, byteOffset]
     byteOffset = _.toNumber(byteOffset)
     byteOffset = _.isNaN(byteOffset) ? (this.length - 1) : _.toSafeInteger(byteOffset)
     if (byteOffset < 0) byteOffset = this.length + byteOffset
 
-    if (_.isString(value)) value = Buffer.fromString(value, encoding)
-    else if (isInstance(value, Uint8Array)) value = Buffer.fromView(value)
+    if (_.isString(val)) val = Buffer.fromString(val, encoding)
+    else if (isInstance(val, Uint8Array)) val = Buffer.fromView(val)
 
-    if (Buffer.isBuffer(value)) { // try to convert Buffer to number
-      if (value.length === 0) return -1
-      else if (value.length === 1) value = value[0]
+    if (Buffer.isBuffer(val)) { // try to convert Buffer to number
+      if (val.length === 0) return -1
+      else if (val.length === 1) val = val[0]
     }
-    if (_.isNumber(value)) {
-      value = _.toSafeInteger(value) & 0xFF
-      for (let i = Math.min(byteOffset, this.length - 1); i >= 0; i--) if (this[i] === value) return i
+    if (_.isNumber(val)) {
+      val = _.toSafeInteger(val) & 0xFF
+      for (let i = Math.min(byteOffset, this.length - 1); i >= 0; i--) if (this[i] === val) return i
       return -1
     }
-    const equalsAtOffset = (i: number): boolean => {
-      for (let j = 0; j < (value as Buffer).length; j++) if (this[i + j] !== (value as Buffer)[j]) return false
-      return true
-    }
-    for (let i = Math.min(byteOffset, this.length - value.length); i >= 0; i--) if (equalsAtOffset(i)) return i
-    return -1
+
+    const thisSub = this.subarray(0, byteOffset + val.length).toReversed()
+    const idx = bufIndexOfBoyerMoore(thisSub, val.toReversed())
+    return idx === -1 ? -1 : (thisSub.length - val.length - idx)
   }
 
   /**
@@ -4523,6 +4495,26 @@ function floatU16ToU32 (u16: number): number {
   if (exp === 0x1F) return ((u16 << 16) & 0x80000000) + 0x7F800000 + ((u16 & 0x3FF) !== 0 ? 0x400000 : 0) // +-inf / NaN
   if (exp === 0) return ((u16 << 16) & 0x80000000) + ((u16 << 13) & 0x7FE000)
   return ((u16 << 16) & 0x80000000) + (((exp + 112) << 23) & 0x7F800000) + ((u16 << 13) & 0x7FE000)
+}
+
+function bufIndexOfBoyerMoore (text: Buffer, pattern: Buffer): number {
+  const [patternLastIdx, maxOffset] = [pattern.length - 1, text.length - pattern.length]
+
+  // build the bad character shift table
+  const bcMap = new Map<number, number>()
+  for (let i = 0; i < patternLastIdx; i++) bcMap.set(pattern[i], patternLastIdx - i)
+
+  let offset = 0
+  while (offset <= maxOffset) {
+    let i = patternLastIdx
+    while (i >= 0 && text[offset + i] === pattern[i]) i--
+    if (i < 0) return offset
+
+    const mismatch = text[offset + patternLastIdx]
+    offset += bcMap.get(mismatch) ?? pattern.length
+  }
+
+  return -1
 }
 
 /**

@@ -7,7 +7,7 @@
   "main": "dist/buffer.js",
   "module": "dist/buffer.mjs",
   "name": "@taichunmin/buffer",
-  "version": "0.13.15",
+  "version": "0.13.16",
   "author": {
     "email": "taichunmin@gmail.com",
     "name": "Chunmin Tai",
@@ -27,9 +27,7 @@
     "lodash-es": "^4.17.21"
   },
   "devDependencies": {
-    "@c4312/matcha": "^1.3.1",
     "@tsconfig/node-lts": "^22.0.2",
-    "@types/benchmark": "^2.1.5",
     "@types/lodash-es": "^4.17.12",
     "@types/node": "^24.0.3",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
@@ -79,7 +77,8 @@
     "url": "git+https://github.com/taichunmin/js-buffer.git"
   },
   "scripts": {
-    "benchmark": "tsx ./benchmark/buffer.ts",
+    "bench": "vitest bench",
+    "bench:ci": "vitest bench --run --outputJson ./dist/bench.json",
     "build": "yarn build:js && yarn build:docs && yarn build:sitemap",
     "build:docs": "typedoc --out dist lib/buffer.ts",
     "build:js": "tsup",
@@ -89,6 +88,6 @@
     "lint:ci": "eslint --ext ts ./lib",
     "publish:test": "npm publish --access public --dry-run",
     "test": "vitest -r ./lib",
-    "test:ci": "vitest run -r ./lib --coverage"
+    "test:ci": "yarn test --run --coverage"
   }
 }

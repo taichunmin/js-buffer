@@ -487,6 +487,20 @@ describe('Buffer#includes()', () => {
 
 describe('Buffer#indexOf()', () => {
   test.each([
+    { str1: 'aabzabzabcz', str2: 'abzabc', expected: 4 },
+    { str1: 'AAIOOOAADDZXYCAADAABAABA', str2: 'AADA', expected: 14 },
+    { str1: 'ababcabc', str2: 'abc', expected: 2 },
+    { str1: 'abc', str2: 'ababcabc', expected: -1 },
+    { str1: 'cbacbaba', str2: 'cba', expected: 0 },
+    { str1: 'THIS IS A TEST TEXT', str2: 'TEST', expected: 10 },
+    { str1: 'zcbazbazbaa', str2: 'cbazba', expected: 1 },
+  ])('Buffer.from("$str1").indexOf("$str2") = $expected', ({ str1, str2, expected }) => {
+    const buf = Buffer.from(str1)
+    const actual = buf.indexOf(str2)
+    expect(actual).toBe(expected)
+  })
+
+  test.each([
     { inputName: 'this', input: 'this', expected: 0 },
     { inputName: 'is', input: 'is', expected: 2 },
     { inputName: 'Buffer.from("a buffer")', input: Buffer.from('a buffer'), expected: 8 },
@@ -541,6 +555,20 @@ describe('Buffer#indexOf()', () => {
 })
 
 describe('Buffer#lastIndexOf()', () => {
+  test.each([
+    { str1: 'aabzabzabcz', str2: 'abzabc', expected: 4 },
+    { str1: 'AAIOOOAADDZXYCAADAABAABA', str2: 'AADA', expected: 14 },
+    { str1: 'ababcabc', str2: 'abc', expected: 2 },
+    { str1: 'abc', str2: 'ababcabc', expected: -1 },
+    { str1: 'cbacbaba', str2: 'cba', expected: 0 },
+    { str1: 'THIS IS A TEST TEXT', str2: 'TEST', expected: 10 },
+    { str1: 'zcbazbazbaa', str2: 'cbazba', expected: 1 },
+  ])('Buffer.from("$str1").indexOf("$str2") = $expected', ({ str1, str2, expected }) => {
+    const buf = Buffer.from(str1)
+    const actual = buf.indexOf(str2)
+    expect(actual).toBe(expected)
+  })
+
   test.each([
     { inputName: 'this', input: 'this', expected: 0 },
     { inputName: 'buffer', input: 'buffer', expected: 17 },
