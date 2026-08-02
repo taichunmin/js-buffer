@@ -134,12 +134,18 @@ out
 *.nojekyll
 *.test.ts
 *.xml
+*.md
 /.eslint*
 /*.config.js
 /benchmark
 /build-utils
+/context7.json
 /dist/assets
+/llms-template.md
 /tsconfig.json
 /tsdoc.json
 /tsup.config.ts
 /typedoc.json
+
+# Allowlist files
+!/README.md

@@ -4223,13 +4223,12 @@ interface PackFromContext {
 
 function packFromPad (ctx: PackFromContext): void {
   const { buf, repeat } = ctx
-  for (let i = 0; i < repeat; i++) buf[ctx.offset] = 0
+  buf.subarray(ctx.offset, ctx.offset + repeat).fill(0)
   ctx.offset += repeat
 }
 
 function unpackToPad (ctx: PackFromContext): void {
-  const { repeat } = ctx
-  ctx.offset += repeat
+  ctx.offset += ctx.repeat
 }
 
 function packFromChar (ctx: PackFromContext): void {

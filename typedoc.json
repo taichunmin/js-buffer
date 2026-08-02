@@ -3,27 +3,48 @@
   "cleanOutputDir": false,
   "customCss": "./build-utils/typedoc-custom.css",
   "darkHighlightTheme": "dark-plus",
-  "entryPoints": ["lib/buffer.ts"],
   "gaID": "G-KB8ZL6LPH5",
+  "html": "./dist",
   "includeVersion": true,
-  "out": "dist",
-  "projectDocuments": ["documents/*.md"],
-  "plugin": [
-    "typedoc-plugin-ga", 
-    "typedoc-plugin-mdn-links", 
-    "typedoc-plugin-missing-exports", 
-    "typedoc-plugin-rename-defaults"
+  "llmsTxtTemplate": "./typedoc/llms-template.md",
+  "markdown": "./dist",
+  "name": "@taichunmin/buffer",
+  "out": "./dist",
+  "searchInComments": true,
+  "searchInDocuments": true,
+  "entryPoints": [
+    "lib/buffer.ts"
   ],
-  "navigationLinks": {
-    "GitHub": "https://github.com/taichunmin/js-buffer",
-    "NPM": "https://www.npmjs.com/package/@taichunmin/buffer",
-    "jsDelivr": "https://www.jsdelivr.com/package/npm/@taichunmin/buffer"
-  },
+  "exclude": [
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/node_modules/**"
+  ],
   "groupOrder": [
     "Constructors",
     "Static Methods",
     "Methods",
     "Alias Methods",
     "*"
+  ],
+  "llmsTxtDeclarations": [
+    {
+      "description": "The Buffer class, a cross platform alternative of Node buffer based on Uint8Array.",
+      "label": "Buffer",
+      "ref": "Buffer!"
+    }
+  ],
+  "navigationLinks": {
+    "GitHub": "https://github.com/taichunmin/js-buffer",
+    "NPM": "https://www.npmjs.com/package/@taichunmin/buffer",
+    "jsDelivr": "https://www.jsdelivr.com/package/npm/@taichunmin/buffer"
+  },
+  "plugin": [
+    "typedoc-plugin-ga",
+    "typedoc-plugin-llms-txt",
+    "typedoc-plugin-markdown",
+    "typedoc-plugin-mdn-links",
+    "typedoc-plugin-missing-exports",
+    "typedoc-plugin-rename-defaults"
   ]
 }

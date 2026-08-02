@@ -1644,6 +1644,7 @@ describe('Buffer.pack()', () => {
 
   test.each([
     { format: '!x', vals: [], hex: '00' },
+    { format: '!3x', vals: [], hex: '000000' },
     { format: '!c', vals: [' '], hex: '20' },
     { format: '!c', vals: [''], hex: '00' },
     { format: '!bb', vals: [1, -1], hex: '01ff' },
@@ -1690,9 +1691,52 @@ describe('Buffer.pack()', () => {
   })
 
   test('Buffer#pack()', () => {
-    const actual = new Buffer(13)
-    actual.pack('<bbbx5sbbb', 1, 2, 3, 'test', 5, 6, 7)
-    expect(actual.toString('hex', 0, 12)).toBe('010203007465737400050607')
+    const actual = new Buffer(14)
+    for (let i = 0; i < 14; i++) actual[i] = i + 1
+    actual.subarray(1).pack('<bbbx5sbbb', 1, 2, 3, 'test', 5, 6, 7)
+    expect(actual.toString('hex')).toBe('010102030074657374000506070e')
+  })
+
+  test.each([
+    { hex: '0100030405060708090a', format: '!x', vals: [] },
+    { hex: '0100000005060708090a', format: '!3x', vals: [] },
+    { hex: '0120030405060708090a', format: '!c', vals: [' '] },
+    { hex: '0100030405060708090a', format: '!c', vals: [''] },
+    { hex: '0101ff0405060708090a', format: '!bb', vals: [1, -1] },
+    { hex: '0101fe0405060708090a', format: '!BB', vals: [1, 254] },
+    { hex: '0101000405060708090a', format: '!??', vals: [true, false] },
+    { hex: '010001ffff060708090a', format: '!hh', vals: [1, -1] },
+    { hex: '010001fffe060708090a', format: '!HH', vals: [1, 0xFFFE] },
+    { hex: '010100ffff060708090a', format: '<hh', vals: [1, -1] },
+    { hex: '010100feff060708090a', format: '<HH', vals: [1, 0xFFFE] },
+    { hex: '0100000001ffffffff0a', format: '!il', vals: [1, -1] },
+    { hex: '0100000001f0f0f0f00a', format: '!IL', vals: [1, 0xF0F0F0F0] },
+    { hex: '0100000000000000010a', format: '!q', vals: [1n] },
+    { hex: '0100000000000000010a', format: '!Q', vals: [1n] },
+    { hex: '0180003bff7c007e000a', format: '!eeee', vals: [-0, 0.99951171875, Infinity, NaN] },
+    { hex: '010080ff3b007c007e0a', format: '<eeee', vals: [-0, 0.99951171875, Infinity, NaN] },
+    { hex: '01800000003f7fffff0a', format: '!ff', vals: [-0, 0.999999940395355225] },
+    { hex: '0100000080ffff7f3f0a', format: '<ff', vals: [-0, 0.999999940395355225] },
+    { hex: '0180000000000000000a', format: '!d', vals: [-0] },
+    { hex: '01000000000000f87f0a', format: '<d', vals: [NaN] },
+    { hex: '0162756666657208090a', format: '!6s', vals: ['buffer'] },
+    { hex: '0101020304050608090a', format: '!6s', vals: [Buffer.from('010203040506', 'hex')] },
+    { hex: '0106627566666572090a', format: '!7p', vals: ['buffer'] },
+    { hex: '0106010203040506090a', format: '!7p', vals: [Buffer.from('010203040506', 'hex')] },
+    { hex: '0101020304060708090a', format: 'i', vals: [0x01020304] },
+    { hex: '0101020304060708090a', format: '@i', vals: [0x01020304] },
+    { hex: '0101020304060708090a', format: '=i', vals: [0x01020304] },
+    { hex: '0104030201060708090a', format: '<i', vals: [0x01020304] },
+    { hex: '0101020304060708090a', format: '>i', vals: [0x01020304] },
+    { hex: '0101020304060708090a', format: '!i', vals: [0x01020304] },
+    { hex: '0108070605040302010a', format: '<q', vals: [0x0102030405060708n] },
+    { hex: '0101020304050607080a', format: '>q', vals: [0x0102030405060708n] },
+  ])('Buffer.pack("$format") = "$hex"', ({ format, vals, hex }) => {
+    // https://github.com/ryanrolds/bufferpack/blob/master/test/cstring.test.js
+    const actual = new Buffer(10)
+    for (let i = 0; i < 10; i++) actual[i] = i + 1
+    actual.subarray(1).pack(format, ...vals)
+    expect(actual.toString('hex')).toBe(hex)
   })
 
   test('should throw error with invalid type of buf', () => {
@@ -1795,6 +1839,7 @@ describe('Buffer.unpack()', () => {
 
   test.each([
     { format: '!x', vals: [], hex: '00' },
+    { format: '!3x', vals: [], hex: '000000' },
     { format: '!c', vals: [Buffer.from(' ')], hex: '20' },
     { format: '!bb', vals: [1, -1], hex: '01ff' },
     { format: '!BB', vals: [1, 254], hex: '01fe' },
