@@ -5,9 +5,9 @@ const cachedDecoders: Record<string, typeof TextDecoder.prototype> = {}
 const cachedEncoders: Record<string, typeof TextEncoder.prototype> = {}
 const customBufferSymbol = Symbol.for('taichunmin.buffer')
 const customInspectSymbol = Symbol.for('nodejs.util.inspect.custom')
-const float16Buf = new DataView(new ArrayBuffer(4))
+const float16Buf = new DataView(new ArrayBuffer(8))
 const INSPECT_MAX_BYTES = 50
-const isNativeLittleEndian = new Uint8Array(new Uint16Array([0x1234]).buffer)[0] === 0x12
+const isNativeLittleEndian = new Uint8Array(new Uint16Array([0x1234]).buffer)[0] === 0x34
 const K_MAX_LENGTH = 0x7FFFFFFF
 const SIGNED_MAX_VALUE = [0, 0x7F, 0x7FFF, 0x7FFFFF, 0x7FFFFFFF, 0x7FFFFFFFFF, 0x7FFFFFFFFFFF]
 const SIGNED_OFFSET = [0, 0x100, 0x10000, 0x1000000, 0x100000000, 0x10000000000, 0x1000000000000]
@@ -992,6 +992,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * Iteratively unpack from the `buf` according to the format string `format`. This method returns an iterator which will read equally sized chunks from the `buf` until remaining contents smaller then the size required by the `format`, as reflected by {@link Buffer.packCalcSize}.
    * @param buf - A `Buffer` to unpack from.
    * @param format - A format string. Please refer to {@link Buffer.packParseFormat} for more information.
+   * @throws A `RangeError` if the `format` requires 0 bytes, since such an iterator would never consume the `buf`.
    * @remarks Unlike Python struct, this method does not support native size and alignment (that wouldn't make much sense in a javascript). Instead, specify byte order and emit pad bytes explicitly.
    * @group Static Methods
    * @example
@@ -1008,6 +1009,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
     const { littleEndian, items } = Buffer.packParseFormat(format)
     const lenRequired = Buffer.packCalcSize(items)
     if (!Buffer.isBuffer(buf)) throw new TypeError('Invalid type of buf')
+    if (lenRequired < 1) throw new RangeError(`Cannot iterate over 0-length format: ${format}`)
     if (buf.length < lenRequired) throw new RangeError(`buf.length = ${buf.length}, lenRequired = ${lenRequired}`)
 
     while (lenRequired <= buf.length) {
@@ -2745,9 +2747,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * ```
    */
   writeFloat16BE (val: number, offset: number = 0): this {
-    float16Buf.setFloat32(0, val)
-    const u32 = float16Buf.getUint32(0)
-    return this.writeUInt16BE(floatU32ToU16(u32), offset)
+    return this.writeUInt16BE(floatToU16(val), offset)
   }
 
   /**
@@ -2766,9 +2766,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * ```
    */
   writeFloat16LE (val: number, offset: number = 0): this {
-    float16Buf.setFloat32(0, val)
-    const u32 = float16Buf.getUint32(0)
-    return this.writeUInt16LE(floatU32ToU16(u32), offset)
+    return this.writeUInt16LE(floatToU16(val), offset)
   }
 
   /**
@@ -3497,6 +3495,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
   /**
    * Iteratively unpack from the `buf` according to the format string `format`. This method returns an iterator which will read equally sized chunks from the `buf` until remaining contents smaller then the size required by the `format`, as reflected by {@link Buffer.packCalcSize}.
    * @param format - A format string. Please refer to {@link Buffer.packParseFormat} for more information.
+   * @throws A `RangeError` if the `format` requires 0 bytes, since such an iterator would never consume the `buf`.
    * @remarks Unlike Python struct, this method does not support native size and alignment (that wouldn't make much sense in a javascript). Instead, specify byte order and emit pad bytes explicitly.
    * @example
    * ```js
@@ -4468,18 +4467,51 @@ function isIterable <T> (val: any): val is Iterable<T> {
   return typeof val?.[Symbol.iterator] === 'function'
 }
 
-function floatU32ToU16 (u32: number): number {
-  // Float32: 1 + 8 + 23, bits = 1 xxxxxxxx 11111111110000000000000
-  //                  0x7FFFFF = 0 00000000 11111111111111111111111
-  // Float16: 1 + 5 + 10, bits = 1    xxxxx 1111111111
-  //                    0x0200 = 0    00000 1000000000
-  //                    0x03FF = 0    00000 1111111111
-  //                    0x7C00 = 0    11111 0000000000
-  //                    0x8000 = 1    00000 0000000000
-  const exp = (u32 >>> 23) & 0xFF
-  if (exp === 0xFF) return ((u32 >>> 16) & 0x8000) + 0x7C00 + ((u32 & 0x7FFFFF) !== 0 ? 0x200 : 0) // +-inf / NaN
-  if (exp === 0) return ((u32 >>> 16) & 0x8000) + ((u32 >>> 13) & 0x3FF)
-  return ((u32 >>> 16) & 0x8000) + (((exp - 112) << 10) & 0x7C00) + ((u32 >>> 13) & 0x3FF)
+/**
+ * Convert a JavaScript number to its IEEE 754 binary16 bit pattern, rounding half to even.
+ *
+ * This reads the float64 bits directly rather than going through float32. Rounding twice (float64 to
+ * float32, then float32 to binary16) disagrees with a single correctly-rounded step whenever the
+ * float32 step lands exactly on a binary16 tie, e.g. `1.0004882812500002` would round down to `1`
+ * instead of up.
+ */
+function floatToU16 (val: number): number {
+  // Float64: 1 + 11 + 52, bias 1023
+  // Float16: 1 +  5 + 10, bias   15, bits = 1    xxxxx 1111111111
+  //                                0x0200 = 0    00000 1000000000
+  //                                0x03FF = 0    00000 1111111111
+  //                                0x7C00 = 0    11111 0000000000
+  //                                0x8000 = 1    00000 0000000000
+  float16Buf.setFloat64(0, val)
+  const hi = float16Buf.getUint32(0) // sign, exponent and the top 20 fraction bits
+  const lo = float16Buf.getUint32(4) // the low 32 fraction bits
+
+  const sign = (hi >>> 16) & 0x8000
+  const exp = (hi >>> 20) & 0x7FF
+  const fracHi = hi & 0xFFFFF
+  if (exp === 0x7FF) return sign + 0x7C00 + ((fracHi !== 0 || lo !== 0) ? 0x200 : 0) // +-inf / NaN
+  if (exp === 0) return sign // float64 zero or subnormal is far below the smallest binary16 subnormal
+
+  const exp16 = exp - 1008 // rebias: 1023 - 15
+  if (exp16 >= 0x1F) return sign + 0x7C00 // too large for binary16, saturate to +-inf
+  if (exp16 > 0) { // normal in binary16, keep the top 10 fraction bits and round on the other 42
+    const u16 = sign + (exp16 << 10) + (fracHi >>> 10)
+    const isHalf = (fracHi & 0x200) !== 0
+    const isSticky = (fracHi & 0x1FF) !== 0 || lo !== 0
+    // a carry out of the fraction rolls into the exponent, and at exp16 = 30 becomes +-inf
+    return (isHalf && (isSticky || (u16 & 1) !== 0)) ? u16 + 1 : u16
+  }
+
+  // subnormal in binary16: restore the implicit leading 1, then shift it down to a fixed 2^-24 scale
+  const shift = 1051 - exp // 43 .. 1050
+  if (shift > 54) return sign // rounds to +-0
+  const sigHi = 0x100000 + fracHi // fraction bits 52..32, with the implicit 1 restored
+  const s = shift - 32 // 11 .. 22, so the whole result comes out of sigHi
+  const u16 = sign + (sigHi >>> s)
+  const isHalf = ((sigHi >>> (s - 1)) & 1) !== 0
+  const isSticky = (sigHi & ((1 << (s - 1)) - 1)) !== 0 || lo !== 0
+  // rounding up out of the fraction lands on the smallest normal, which is the correct next value
+  return (isHalf && (isSticky || (u16 & 1) !== 0)) ? u16 + 1 : u16
 }
 
 function floatU16ToU32 (u16: number): number {
@@ -4490,10 +4522,17 @@ function floatU16ToU32 (u16: number): number {
   //                0x80000000 = 1 00000000 00000000000000000000000
   // Float16: 1 + 5 + 10, bits = 1    xxxxx 1111111111
   //                    0x03FF = 0    00000 1111111111
+  const sign = (u16 << 16) & 0x80000000
   const exp = (u16 >>> 10) & 0x1F
-  if (exp === 0x1F) return ((u16 << 16) & 0x80000000) + 0x7F800000 + ((u16 & 0x3FF) !== 0 ? 0x400000 : 0) // +-inf / NaN
-  if (exp === 0) return ((u16 << 16) & 0x80000000) + ((u16 << 13) & 0x7FE000)
-  return ((u16 << 16) & 0x80000000) + (((exp + 112) << 23) & 0x7F800000) + ((u16 << 13) & 0x7FE000)
+  const frac = u16 & 0x3FF
+  if (exp === 0x1F) return sign + 0x7F800000 + (frac !== 0 ? 0x400000 : 0) // +-inf / NaN
+  if (exp === 0) {
+    if (frac === 0) return sign // +-0
+    // binary16 subnormals are all normal in float32: value is frac * 2^-24, so normalize on the top set bit
+    const msb = 31 - Math.clz32(frac) // 0 .. 9
+    return sign + ((msb + 103) << 23) + ((frac << (23 - msb)) & 0x7FFFFF)
+  }
+  return sign + (((exp + 112) << 23) & 0x7F800000) + ((u16 << 13) & 0x7FE000)
 }
 
 function bufIndexOfBoyerMoore (text: Buffer, pattern: Buffer): number {

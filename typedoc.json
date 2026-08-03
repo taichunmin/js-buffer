@@ -29,7 +29,7 @@
   ],
   "llmsTxtDeclarations": [
     {
-      "description": "The Buffer class, a cross platform alternative of Node buffer based on Uint8Array.",
+      "description": "Complete API reference for the Buffer class, a cross platform alternative of Node buffer based on Uint8Array. Covers construction and allocation (from, of, alloc, allocUnsafe, allocUnsafeSlow, concat, copyBytesFrom, fromView); encoding conversion between hex, base64, base64url, utf8, latin1, ascii, binary and ucs2/utf16le via toString, write and the fromHexString/toHexString style helpers; typed reads and writes for every integer width in both byte orders (readUInt8, readUInt16LE, readInt32BE, readUIntBE, readBigUInt64LE, writeInt16LE, writeBigInt64BE and friends), IEEE 754 float16/float32/float64 (readFloatLE, readDoubleBE, readFloat16LE), and single bits (readBitLSB, writeBitMSB); DataView style aliases (getUint16, setFloat32, getBigInt64); Python struct compatible pack, unpack, iterUnpack, packCalcSize and packParseFormat; bitwise and, or, xor, not with their toAnded/toOred/toXored/toNoted copies; byte order swaps (swap16, swap32, swap64); plus slicing, copying, comparison and search (subarray, slice, copy, chunk, equals, compare, indexOf, lastIndexOf, includes) and the isBuffer/isEncoding/byteLength static helpers.",
       "label": "Buffer",
       "ref": "Buffer!"
     }

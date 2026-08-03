@@ -29,7 +29,6 @@ jobs:
               "inputs": ${{ toJSON(inputs) }},
               "job": ${{ toJSON(job) }},
               "runner": ${{ toJSON(runner) }},
-              "secrets": ${{ toJSON(secrets) }},
               "steps": ${{ toJSON(steps) }},
               "vars": ${{ toJSON(vars) }}
             }
@@ -73,7 +72,6 @@ jobs:
               "inputs": ${{ toJSON(inputs) }},
               "job": ${{ toJSON(job) }},
               "runner": ${{ toJSON(runner) }},
-              "secrets": ${{ toJSON(secrets) }},
               "steps": ${{ toJSON(steps) }},
               "vars": ${{ toJSON(vars) }}
             }
@@ -118,3 +116,15 @@ jobs:
             https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/dist/buffer.mjs/+esm
             https://cdn.jsdelivr.net/npm/@taichunmin/buffer/dist/buffer.global.js
             https://cdn.jsdelivr.net/npm/@taichunmin/buffer/dist/buffer.mjs/+esm
+      - name: Trigger Context7 Refresh
+        continue-on-error: true
+        env:
+          CONTEXT7_API_KEY: ${{ secrets.CONTEXT7_API_KEY }}
+        run: |
+          set -ex
+          LIBRARY_NAME="$(jq -re '.url | sub("^https?://context7\\.com"; "")' dist/context7.json)"
+          echo "Refreshing Context7 library: $LIBRARY_NAME"
+          curl -s -X POST https://context7.com/api/v1/refresh \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $CONTEXT7_API_KEY" \
+            -d "$(jq -nc --arg name "$LIBRARY_NAME" '{ libraryName: $name }')"

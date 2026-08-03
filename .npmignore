@@ -131,21 +131,22 @@ out
 # extra ignore file for npm
 .github
 *.html
+*.md
 *.nojekyll
 *.test.ts
 *.xml
-*.md
 /.eslint*
 /*.config.js
 /benchmark
 /build-utils
-/context7.json
 /dist/assets
 /llms-template.md
+/static
 /tsconfig.json
 /tsdoc.json
 /tsup.config.ts
 /typedoc.json
+context7.json
 
 # Allowlist files
 !/README.md

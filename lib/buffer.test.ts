@@ -3,6 +3,10 @@ import util from 'node:util'
 import { describe, expect, test, vi } from 'vitest'
 import { Buffer } from './buffer'
 
+// The `@`, `=` and prefixless formats follow the host, so their expectations have to as well.
+const isNativeLittleEndian = new Uint8Array(new Uint16Array([0x1234]).buffer)[0] === 0x34
+const nativeHex = (le: string, be: string): string => isNativeLittleEndian ? le : be
+
 describe('new Buffer', () => {
   test('0 arguments', () => {
     const actual = new Buffer()
@@ -1284,6 +1288,47 @@ describe('read/write Float16', () => {
     expect(buf.setFloat16(0, -2, true).getFloat16(0, true)).toBe(-2)
     expect(buf.setFloat16(1, -2, true).getFloat16(1, true)).toBe(-2)
   })
+
+  test.each([
+    // overflow saturates to +-Infinity instead of wrapping around the exponent
+    { hex: '7bff', float: 65504 }, // largest finite binary16
+    { hex: '7bff', float: 65519.99 }, // just below the tie, still rounds down
+    { hex: '7c00', float: 65520 }, // the tie rounds up, and up is Infinity
+    { hex: '7c00', float: 1e5 },
+    { hex: '7c00', float: 1e9 },
+    { hex: '7c00', float: 1e308 },
+    { hex: 'fc00', float: -1e9 },
+    // subnormals, written as exact powers of two rather than lossy decimal literals
+    { hex: '0400', float: 2 ** -14 }, // smallest normal
+    { hex: '03ff', float: 1023 * 2 ** -24 }, // largest subnormal
+    { hex: '0001', float: 2 ** -24 }, // smallest subnormal
+    { hex: '8001', float: -(2 ** -24) },
+    // underflow, with the exact half rounding to even (zero) rather than up
+    { hex: '0000', float: 2 ** -25 }, // exactly half the smallest subnormal
+    { hex: '0001', float: 2 ** -25 * (1 + Number.EPSILON) }, // the next float64 up, so it rounds up
+    { hex: '0000', float: 1e-8 },
+    { hex: '0000', float: 5e-324 },
+    { hex: '8000', float: -1e-8 },
+  ])('writeFloat16BE($float) = "$hex"', ({ hex, float }) => {
+    expect(new Buffer(2).writeFloat16BE(float).toString('hex')).toBe(hex)
+  })
+
+  test('rounds half to even, without double rounding through float32', () => {
+    // 1.00048828125 is the midpoint between 1 and the next binary16 value, so it ties to even (1)
+    expect(new Buffer(2).writeFloat16BE(1.00048828125).toString('hex')).toBe('3c00')
+    // a hair above the midpoint must round up, even though float32 would snap it back onto the tie
+    expect(new Buffer(2).writeFloat16BE(1.0004882812500002).toString('hex')).toBe('3c01')
+    expect(new Buffer(2).writeFloat16BE(1.0009765625).toString('hex')).toBe('3c01')
+  })
+
+  test('round-trips every binary16 bit pattern', () => {
+    const buf = new Buffer(2)
+    for (let u16 = 0; u16 < 0x10000; u16++) {
+      const float = buf.writeUInt16BE(u16).readFloat16BE()
+      if (Number.isNaN(float)) continue // NaN payloads are not preserved
+      expect(buf.writeFloat16BE(float).readUInt16BE()).toBe(u16)
+    }
+  })
 })
 
 test('read/write Float', () => {
@@ -1668,9 +1713,9 @@ describe('Buffer.pack()', () => {
     { format: '!6s', vals: [Buffer.from('010203040506', 'hex')], hex: '010203040506' },
     { format: '!7p', vals: ['buffer'], hex: '06627566666572' },
     { format: '!7p', vals: [Buffer.from('010203040506', 'hex')], hex: '06010203040506' },
-    { format: 'i', vals: [0x01020304], hex: '01020304' },
-    { format: '@i', vals: [0x01020304], hex: '01020304' },
-    { format: '=i', vals: [0x01020304], hex: '01020304' },
+    { format: 'i', vals: [0x01020304], hex: nativeHex('04030201', '01020304') },
+    { format: '@i', vals: [0x01020304], hex: nativeHex('04030201', '01020304') },
+    { format: '=i', vals: [0x01020304], hex: nativeHex('04030201', '01020304') },
     { format: '<i', vals: [0x01020304], hex: '04030201' },
     { format: '>i', vals: [0x01020304], hex: '01020304' },
     { format: '!i', vals: [0x01020304], hex: '01020304' },
@@ -1723,9 +1768,9 @@ describe('Buffer.pack()', () => {
     { hex: '0101020304050608090a', format: '!6s', vals: [Buffer.from('010203040506', 'hex')] },
     { hex: '0106627566666572090a', format: '!7p', vals: ['buffer'] },
     { hex: '0106010203040506090a', format: '!7p', vals: [Buffer.from('010203040506', 'hex')] },
-    { hex: '0101020304060708090a', format: 'i', vals: [0x01020304] },
-    { hex: '0101020304060708090a', format: '@i', vals: [0x01020304] },
-    { hex: '0101020304060708090a', format: '=i', vals: [0x01020304] },
+    { hex: nativeHex('0104030201060708090a', '0101020304060708090a'), format: 'i', vals: [0x01020304] },
+    { hex: nativeHex('0104030201060708090a', '0101020304060708090a'), format: '@i', vals: [0x01020304] },
+    { hex: nativeHex('0104030201060708090a', '0101020304060708090a'), format: '=i', vals: [0x01020304] },
     { hex: '0104030201060708090a', format: '<i', vals: [0x01020304] },
     { hex: '0101020304060708090a', format: '>i', vals: [0x01020304] },
     { hex: '0101020304060708090a', format: '!i', vals: [0x01020304] },
@@ -1860,9 +1905,9 @@ describe('Buffer.unpack()', () => {
     { format: '<d', vals: [NaN], hex: '000000000000f87f' },
     { format: '!6s', vals: [Buffer.from('010203040506', 'hex')], hex: '010203040506' },
     { format: '!7p', vals: [Buffer.from('010203040506', 'hex')], hex: '06010203040506' },
-    { format: 'i', vals: [0x01020304], hex: '01020304' },
-    { format: '@i', vals: [0x01020304], hex: '01020304' },
-    { format: '=i', vals: [0x01020304], hex: '01020304' },
+    { format: 'i', vals: [0x01020304], hex: nativeHex('04030201', '01020304') },
+    { format: '@i', vals: [0x01020304], hex: nativeHex('04030201', '01020304') },
+    { format: '=i', vals: [0x01020304], hex: nativeHex('04030201', '01020304') },
     { format: '<i', vals: [0x01020304], hex: '04030201' },
     { format: '>i', vals: [0x01020304], hex: '01020304' },
     { format: '!i', vals: [0x01020304], hex: '01020304' },
@@ -1914,6 +1959,16 @@ describe('Buffer.iterUnpack()', () => {
     }
   })
 
+  test.each(['!0B', '!0x', '!0s', '!0B0s'])('should throw error with 0-length format "%s"', format => {
+    // a 0-length record would otherwise never consume the buf, looping forever
+    expect(() => [...Buffer.iterUnpack(Buffer.from('01fe01fe', 'hex'), format)]).toThrow(/0-length format/)
+  })
+
+  test('should drop a trailing partial record', () => {
+    const buf = Buffer.from('0102030405', 'hex')
+    expect([...Buffer.iterUnpack(buf, '>2b')]).toEqual([[1, 2], [3, 4]])
+  })
+
   test('should throw error with unknown format', () => {
     expect.hasAssertions()
     try {
@@ -1947,6 +2002,21 @@ describe('Buffer.packParseFormat()', () => {
   test('pascal string max repeat is 255', () => {
     const actual = Buffer.packParseFormat('256p')?.items
     expect(actual).toEqual([[255, 'p']])
+  })
+
+  test.each(['', '@', '='])('native prefix "%s" resolves to the host byte order', prefix => {
+    expect(Buffer.packParseFormat(`${prefix}i`).littleEndian).toBe(isNativeLittleEndian)
+    // and it must agree with how the platform actually lays out a Uint16Array
+    const native = new Uint8Array(new Uint16Array([0x0102]).buffer)
+    expect(Buffer.pack(`${prefix}H`, 0x0102)).toEqual(Buffer.fromView(native))
+  })
+
+  test.each([
+    { prefix: '<', littleEndian: true },
+    { prefix: '>', littleEndian: false },
+    { prefix: '!', littleEndian: false },
+  ])('explicit prefix "$prefix" ignores the host byte order', ({ prefix, littleEndian }) => {
+    expect(Buffer.packParseFormat(`${prefix}i`).littleEndian).toBe(littleEndian)
   })
 })
 
