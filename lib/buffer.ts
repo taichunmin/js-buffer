@@ -840,8 +840,86 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * A format character may be preceded by an integral repeat count. For example, the format string `4h` means exactly the same as `hhhh`.
    *
    * For the `?` format character, the return value is either `true` or `false`. When packing, the truth value of the argument object is used. Either `0` or `1` in the bool representation will be packed, and any non-zero value will be `true` when unpacking.
+   * @returns `{ littleEndian, items }`, where `items` is an array of `[repeat, type]` pairs. Passing that `items` array back to {@link Buffer.packCalcSize} skips re-parsing, which is worth doing in a hot loop.
    * @remarks Unlike Python struct, this method does not support native size and alignment (that wouldn't make much sense in a javascript). Instead, specify byte order and emit pad bytes explicitly.
+   *
+   * The format syntax is borrowed from Python's `struct` module, but **the runtime behaviour is not** — this library validates far less than Python does, and several cases Python rejects loudly are silently accepted here. If you are porting `struct` code, the four that bite hardest are:
+   *
+   * 1. **Integers are never range-checked.** `Buffer.pack('>B', 300)` returns `2c`, not an error.
+   * 2. **Extra values are silently ignored.** `Buffer.pack('>b', 1, 2, 3)` returns `01`.
+   * 3. **`c` / `s` / `p` unpack to views that share memory with the source buffer**, not to copies.
+   * 4. **`unpack` accepts an over-long buffer** and ignores the trailing bytes, where Python demands an exact length.
+   *
+   * <h3>API Surface</h3>
+   *
+   * Every operation has a static form and, except for `packCalcSize`, an instance form:
+   *
+   * | Static | Instance | Python equivalent |
+   * | ------ | -------- | ----------------- |
+   * | `Buffer.pack(format, ...vals)` | — | `struct.pack` |
+   * | `Buffer.pack(buf, format, ...vals)` | `buf.pack(format, ...vals)` | `struct.pack_into` |
+   * | `Buffer.unpack(buf, format)` | `buf.unpack(format)` | `struct.unpack` |
+   * | `Buffer.iterUnpack(buf, format)` | `buf.iterUnpack(format)` | `struct.iter_unpack` |
+   * | `Buffer.packCalcSize(formatOrItems)` | — | `struct.calcsize` |
+   * | `Buffer.packParseFormat(format)` | — | (no equivalent) |
+   *
+   * <h3>Format String Validation</h3>
+   *
+   * Only `/^([@=<>!]?)((?:\d*[xcbB?hHiIlLqQefdsp])+)$/` is accepted; anything else throws `TypeError: Invalid format: …`. In particular, and unlike Python:
+   *
+   * - **Whitespace is not allowed.** `'> b h'` throws, where Python ignores whitespace between format characters.
+   * - **The empty string is not a valid format.** `''` throws, where Python's `calcsize('')` is `0`.
+   * - A byte order prefix is only accepted at position 0, so `'b>h'` throws.
+   * - `n`, `N` and `P` are not supported and throw, since they only exist in Python's native mode.
+   * - `i`/`I` and `l`/`L` are identical here — both are 4 bytes, since there is no native size mode.
+   * - A `p` count above 255 is clamped to 255, so `Buffer.packCalcSize('300p')` is `255` where Python gives `300`.
+   *
+   * <h3>Differences from Python's `struct`</h3>
+   *
+   * | # | Behaviour | This library | Python |
+   * | - | --------- | ------------ | ------ |
+   * | 1 | Out-of-range integers | coerced and wrapped silently | `struct.error` |
+   * | 2 | Non-numeric values for integer formats | coerced (`'abc'` becomes `0`) | `struct.error` |
+   * | 3 | Extra values passed to `pack` | ignored | `struct.error` |
+   * | 4 | `unpack` buffer length | must be **at least** {@link Buffer.packCalcSize}; extra bytes ignored | must be exactly `calcsize` |
+   * | 5 | `iter_unpack` trailing bytes | partial record dropped | `struct.error` |
+   * | 6 | `c` / `s` / `p` unpack results | views sharing the source's memory | independent `bytes` copies |
+   * | 7 | Native size and alignment | not supported; no padding is ever inserted for any prefix | `@` inserts C alignment padding |
+   * | 8 | `p` count above 255 | clamped to 255 | `300` |
+   * | 9 | Whitespace in the format string | `TypeError` | ignored |
+   * | 10 | Empty format string | `TypeError` | valid, `calcsize('')` is `0` |
+   * | 11 | `n`, `N`, `P` formats | `TypeError` | supported in native mode |
+   * | 12 | `?` truthiness | JS rules (`[]` and `{}` are true) | Python rules (`[]` and `{}` are false) |
+   * | 13 | Float overflow | saturates to `±Infinity` | `OverflowError` for `e`, `f` |
+   * | 14 | Error type | `TypeError` / `RangeError` / `SyntaxError` | `struct.error` |
+   * | 15 | `q` / `Q` results | always `bigint` | `int` |
+   *
+   * Rows 7 and 8 are deliberate design choices. The rest follow from this library validating less than Python does, so **validate ranges and argument counts yourself** at the boundary where untrusted data enters.
+   *
+   * <h3>Errors</h3>
+   *
+   * Python raises `struct.error` for everything. This library uses ordinary JS error types, so catch accordingly:
+   *
+   * | Error | Cause |
+   * | ----- | ----- |
+   * | `TypeError: Invalid format: …` | format string does not match the grammar |
+   * | `TypeError: Invalid type of format` | format is not a string |
+   * | `TypeError: Invalid type of buf` | `buf` is not a `Buffer` (a plain `Uint8Array` lands here) |
+   * | `TypeError: Not enough vals` | fewer values than the format requires |
+   * | `TypeError: Invalid type of value: number` | a number passed to `c`, `s` or `p` |
+   * | `RangeError: buf.length = N, lenRequired = M` | buffer shorter than {@link Buffer.packCalcSize} |
+   * | `RangeError: Cannot iterate over 0-length format: …` | {@link Buffer.iterUnpack} with a format of size 0 |
+   * | `RangeError` / `SyntaxError` from `BigInt()` | bad value for `q` or `Q` |
    * @group Static Methods
+   * @example
+   * ```js
+   * ;(async function () {
+   *   const { Buffer } = await import('https://cdn.jsdelivr.net/npm/@taichunmin/buffer@0/+esm')
+   *
+   *   const { items } = Buffer.packParseFormat('<qh6xq')
+   *   console.log(Buffer.packCalcSize(items)) // Prints: 24
+   * })()
+   * ```
    */
   static packParseFormat (format: string): PackFormat {
     if (!_.isString(format)) throw new TypeError('Invalid type of format')
@@ -896,6 +974,39 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * @param vals - Values to pack.
    * @group Static Methods
    * @remarks Unlike Python struct, this method does not support native size and alignment (that wouldn't make much sense in a javascript). Instead, specify byte order and emit pad bytes explicitly.
+   *
+   * `pack` is both `struct.pack` and `struct.pack_into`, chosen by whether the first argument is a `Buffer` or a format string. There is no `offset` parameter; pack into a `subarray()` to write at an offset, since it shares memory with the parent.
+   *
+   * <h3>Packing values: coercion, not validation</h3>
+   *
+   * This is the largest behavioural gap from Python. Producing a value the format cannot hold is not an error; the value is coerced and then truncated.
+   *
+   * **Integer formats (`b B h H i I l L`)** run the value through lodash `toSafeInteger` and then write it with a `DataView` setter, so it wraps modulo the field width. Nothing throws, where every row below is a `struct.error` in Python:
+   *
+   * | Call | Result |
+   * | ---- | ------ |
+   * | `Buffer.pack('>B', 300)` | `2c` (300 mod 256) |
+   * | `Buffer.pack('>B', -1)` | `ff` |
+   * | `Buffer.pack('>h', 1.9)` | `0001` (truncated toward zero) |
+   * | `Buffer.pack('>h', '258')` | `0102` |
+   * | `Buffer.pack('>h', null)` | `0000` |
+   * | `Buffer.pack('>h', NaN)` | `0000` |
+   * | `Buffer.pack('>h', 'abc')` | `0000` |
+   * | `Buffer.pack('>i', 1e20)` | `ffffffff` (clamped to `Number.MAX_SAFE_INTEGER`, then wrapped) |
+   *
+   * **Validate ranges yourself** before packing anything that comes from user input or the network.
+   *
+   * **`q` / `Q`** always unpack to `bigint`, never `number`. When packing, the value goes through `BigInt()`, which is stricter than the integer path — but the result still wraps. Pass a `bigint` literal for anything that might exceed 2^53.
+   *
+   * **`?`** uses JavaScript truthiness, which differs from Python's for several common values: `[]` and `{}` pack as `01`, and any non-empty string including `'false'` packs as `01`.
+   *
+   * **`c`, `s` and `p`** pass the value to {@link Buffer.from}, so a `Buffer`, string (UTF-8) or byte array all work, but a **number throws** `TypeError: Invalid type of value: number` — `Buffer.pack('>c', 65)` is an error; use `Buffer.pack('>c', 'A')` or `Buffer.pack('>B', 65)`. `c` keeps only the first byte of whatever it is given, and an empty value packs as `00`.
+   *
+   * **`e`, `f` and `d`** always use IEEE 754 binary16 / binary32 / binary64 regardless of the host, rounding half to even. Values too large for the format saturate to `±Infinity` rather than raising, which is where `e` differs most from Python — `Buffer.pack('>e', 1e5)` is `7c00` (`Infinity`), while Python's `struct.pack('>e', 1e5)` raises `OverflowError`. The largest finite binary16 is `65504`, and anything above `65519.996…` rounds up to `Infinity`.
+   *
+   * <h3>Argument count</h3>
+   *
+   * Too few values throws `TypeError: Not enough vals`. **Too many are silently ignored**, where Python raises `struct.error` in both directions: `Buffer.pack('>b', 1, 2, 3)` is `01`.
    * @see Please refer to [Python struct — Interpret bytes as packed binary data](https://docs.python.org/3/library/struct.html) for more information.
    * @example
    * ```js
@@ -912,10 +1023,13 @@ export class Buffer extends Uint8Array implements INodeBuffer {
 
   /**
    * Pack `vals` into `buf` according to the format string `format`. The arguments must match the `vals` required by the `format` exactly. The `buf`’s size in bytes must larger then the size required by the `format`, as reflected by {@link Buffer.packCalcSize}.
-   * @param buf - A `Buffer` to pack into.
+   * @param buf - A `Buffer` to pack into. A plain `Uint8Array` throws `TypeError: Invalid type of buf` — wrap it first with {@link Buffer.fromView}, which shares the same memory, or {@link Buffer.from}, which copies.
    * @param format - A format string. Please refer to {@link Buffer.packParseFormat} for more information.
    * @param vals - Values to pack.
+   * @throws A `RangeError` if `buf` is shorter than {@link Buffer.packCalcSize}.
    * @remarks Unlike Python struct, this method does not support native size and alignment (that wouldn't make much sense in a javascript). Instead, specify byte order and emit pad bytes explicitly.
+   *
+   * Only the bytes the `format` covers are written, so a longer `buf` is fine and its trailing bytes are left as they were: `Buffer.alloc(4).fill(0xEE)` packed with `'>h'` becomes `0102eeee`. Values are coerced rather than validated — please refer to {@link Buffer.pack} for the details.
    * @group Static Methods
    * @example
    * ```js
@@ -958,9 +1072,16 @@ export class Buffer extends Uint8Array implements INodeBuffer {
 
   /**
    * Unpack from the `buf` (presumably packed by `pack(format, ...)`) according to the format string `format`. The result is a tuple even if it contains exactly one item. The `buf`’s size in bytes must larger then the size required by the `format`, as reflected by {@link Buffer.packCalcSize}.
-   * @param buf - A `Buffer` to unpack from.
+   * @param buf - A `Buffer` to unpack from. A plain `Uint8Array` throws `TypeError: Invalid type of buf` — wrap it first with {@link Buffer.fromView}, which shares the same memory, or {@link Buffer.from}, which copies.
    * @param format - A format string. Please refer to {@link Buffer.packParseFormat} for more information.
+   * @throws A `RangeError` if `buf` is shorter than {@link Buffer.packCalcSize}.
    * @remarks Unlike Python struct, this method does not support native size and alignment (that wouldn't make much sense in a javascript). Instead, specify byte order and emit pad bytes explicitly.
+   *
+   * An over-long `buf` is accepted and its trailing bytes are ignored, where Python demands an exact length. The result is always an array, even for a single value: `Buffer.unpack(buf, '>b')` is `[1]`, not `1`.
+   *
+   * <h3>Unpacked `c` / `s` / `p` are views, not copies</h3>
+   *
+   * For `c`, `s` and `p` the result is a `subarray()` view into `buf`, where Python's `struct` always returns independent `bytes`. Mutating a result mutates the source, and holding one alive retains the whole underlying `ArrayBuffer`. Call {@link Buffer.slice} (or {@link Buffer.from}) when you need to detach the result from the source.
    * @group Static Methods
    * @example
    * ```js
@@ -969,6 +1090,11 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    *
    *   const buf1 = Buffer.from('01fe01fe', 'hex')
    *   console.log(Buffer.unpack(buf1, '!BBbb')) // Prints: [1, 254, 1, -2]
+   *
+   *   const buf2 = Buffer.from('0161626300', 'hex')
+   *   const [str] = Buffer.unpack(buf2, '>x4s')
+   *   str[0] = 0x5a
+   *   console.log(buf2.toString('hex')) // Prints: 015a626300, the source changed
    * })()
    * ```
    */
@@ -992,8 +1118,10 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * Iteratively unpack from the `buf` according to the format string `format`. This method returns an iterator which will read equally sized chunks from the `buf` until remaining contents smaller then the size required by the `format`, as reflected by {@link Buffer.packCalcSize}.
    * @param buf - A `Buffer` to unpack from.
    * @param format - A format string. Please refer to {@link Buffer.packParseFormat} for more information.
-   * @throws A `RangeError` if the `format` requires 0 bytes, since such an iterator would never consume the `buf`.
+   * @throws A `RangeError` if the `format` requires 0 bytes, since such an iterator would never consume the `buf`. Python raises `ValueError: cannot iterate over 0-length struct` for the same reason.
    * @remarks Unlike Python struct, this method does not support native size and alignment (that wouldn't make much sense in a javascript). Instead, specify byte order and emit pad bytes explicitly.
+   *
+   * A trailing partial record is silently dropped, where Python's `iter_unpack` raises unless the length is an exact multiple: `[...Buffer.iterUnpack(Buffer.from('0102030405', 'hex'), '>2b')]` is `[[1, 2], [3, 4]]` and the 5th byte is ignored. A `buf` too short for even one record still throws a `RangeError`. As with {@link Buffer.unpack}, `c` / `s` / `p` results are views sharing the source's memory.
    * @group Static Methods
    * @example
    * ```js
