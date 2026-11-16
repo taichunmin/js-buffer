@@ -1,129 +1,118 @@
-import { bench, describe } from 'vitest'
+import { test, type TestContext } from 'vitest'
 import { Buffer as NodeBuffer } from 'node:buffer'
 import { Buffer as LibBuffer } from '../lib/buffer'
 
+async function compareNodeAndLib (bench: TestContext['bench'], nodeFn: () => unknown, libFn: () => unknown): Promise<void> {
+  await bench.compare(
+    bench('node:buffer', nodeFn),
+    bench('@taichunmin/buffer', libFn),
+  )
+}
+
 for (let i = 1; i <= 6; i++) {
-  describe(`#readUIntBE(0, ${i})`, () => {
+  test(`#readUIntBE(0, ${i})`, async ({ bench }) => {
     const nodeBuf = NodeBuffer.alloc(i)
     const libBuf = LibBuffer.alloc(i)
 
-    bench('node:buffer', () => {
+    await compareNodeAndLib(bench, () => {
       nodeBuf.readUIntBE(0, i)
-    })
-
-    bench('@taichunmin/buffer', () => {
+    }, () => {
       libBuf.readUIntBE(0, i)
     })
   })
 }
 
-describe('alloc()', () => {
+test('alloc()', async ({ bench }) => {
   const LENGTH = 16
 
-  bench('node:buffer', () => {
+  await compareNodeAndLib(bench, () => {
     NodeBuffer.alloc(LENGTH)
-  })
-
-  bench('@taichunmin/buffer', () => {
+  }, () => {
     LibBuffer.alloc(LENGTH)
   })
 })
 
-describe('#bracket-notation', () => {
+test('#bracket-notation', async ({ bench }) => {
   const nodeBuf = NodeBuffer.alloc(32)
   const libBuf = LibBuffer.alloc(32)
 
-  bench('node:buffer', () => {
+  await compareNodeAndLib(bench, () => {
     for (let i = 0; i < 32; i++) nodeBuf[i] = i + 97
-  })
-
-  bench('@taichunmin/buffer', () => {
+  }, () => {
     for (let i = 0; i < 32; i++) libBuf[i] = i + 97
   })
 })
 
-describe('.concat()', () => {
+test('.concat()', async ({ bench }) => {
   const nodeBuf1 = NodeBuffer.alloc(32, '1')
   const nodeBuf2 = NodeBuffer.alloc(32, '2')
   const libBuf1 = LibBuffer.alloc(32, '1')
   const libBuf2 = LibBuffer.alloc(32, '2')
 
-  bench('node:buffer', () => {
+  await compareNodeAndLib(bench, () => {
     NodeBuffer.concat([nodeBuf1, nodeBuf2])
-  })
-
-  bench('@taichunmin/buffer', () => {
+  }, () => {
     LibBuffer.concat([libBuf1, libBuf2])
   })
 })
 
-describe('#copy()', () => {
+test('#copy()', async ({ bench }) => {
   const LENGTH = 16
   const nodeBuf1 = NodeBuffer.alloc(LENGTH)
   const nodeBuf2 = NodeBuffer.alloc(LENGTH)
   const libBuf1 = LibBuffer.alloc(LENGTH)
   const libBuf2 = LibBuffer.alloc(LENGTH)
 
-  bench('node:buffer', () => {
+  await compareNodeAndLib(bench, () => {
     nodeBuf1.copy(nodeBuf2)
-  })
-
-  bench('@taichunmin/buffer', () => {
+  }, () => {
     libBuf1.copy(libBuf2)
   })
 })
 
-describe('#copy() (big)', () => {
+test('#copy() (big)', async ({ bench }) => {
   const LENGTH = 2 ** 14
   const nodeBuf1 = NodeBuffer.alloc(LENGTH)
   const nodeBuf2 = NodeBuffer.alloc(LENGTH)
   const libBuf1 = LibBuffer.alloc(LENGTH)
   const libBuf2 = LibBuffer.alloc(LENGTH)
 
-  bench('node:buffer', () => {
+  await compareNodeAndLib(bench, () => {
     nodeBuf1.copy(nodeBuf2)
-  })
-
-  bench('@taichunmin/buffer', () => {
+  }, () => {
     libBuf1.copy(libBuf2)
   })
 })
 
-describe('#readDoubleBE(0)', () => {
+test('#readDoubleBE(0)', async ({ bench }) => {
   const nodeBuf = NodeBuffer.alloc(8)
   const libBuf = LibBuffer.alloc(8)
 
-  bench('node:buffer', () => {
+  await compareNodeAndLib(bench, () => {
     nodeBuf.readDoubleBE(0)
-  })
-
-  bench('@taichunmin/buffer', () => {
+  }, () => {
     libBuf.readDoubleBE(0)
   })
 })
 
-describe('#readFloatBE(0)', () => {
+test('#readFloatBE(0)', async ({ bench }) => {
   const nodeBuf = NodeBuffer.alloc(4)
   const libBuf = LibBuffer.alloc(4)
 
-  bench('node:buffer', () => {
+  await compareNodeAndLib(bench, () => {
     nodeBuf.readFloatBE(0)
-  })
-
-  bench('@taichunmin/buffer', () => {
+  }, () => {
     libBuf.readFloatBE(0)
   })
 })
 
-describe('#readUInt32BE(0)', () => {
+test('#readUInt32BE(0)', async ({ bench }) => {
   const nodeBuf = NodeBuffer.alloc(4)
   const libBuf = LibBuffer.alloc(4)
 
-  bench('node:buffer', () => {
+  await compareNodeAndLib(bench, () => {
     nodeBuf.readUInt32BE(0)
-  })
-
-  bench('@taichunmin/buffer', () => {
+  }, () => {
     libBuf.readUInt32BE(0)
   })
 })

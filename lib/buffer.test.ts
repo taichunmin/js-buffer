@@ -121,6 +121,17 @@ describe('Buffer.from()', () => {
     expect(actual.toString('hex')).toEqual('74e97374')
   })
 
+  test.each([
+    { str: 'abc', expected: '616263' },
+    { str: 'é', expected: 'e9' },
+    { str: '\x80\xff', expected: '80ff' },
+    { str: '日', expected: 'e5' },
+    { str: '😀', expected: '3d00' },
+  ])('should keep the highest bit and truncate to 1 byte with latin1 and ascii: $str', ({ str, expected }) => {
+    expect(Buffer.from(str, 'latin1').toString('hex')).toBe(expected)
+    expect(Buffer.from(str, 'ascii').toString('hex')).toBe(expected)
+  })
+
   test('should creates a Buffer containing the utf16le bytes', () => {
     const actual = Buffer.from('fhqwhgads', 'utf16le')
     expect(actual.toString('hex')).toEqual('660068007100770068006700610064007300')
@@ -709,8 +720,23 @@ describe('Buffer.concat()', () => {
     try {
       Buffer.concat('' as any)
     } catch (err) {
-      expect(err.message).toMatch(/an array of Buffers/)
+      expect(err.message).toMatch(/an array of Buffer, Uint8Array or ArrayBufferView/)
     }
+  })
+
+  test('should accept Uint8Array items', () => {
+    const actual = Buffer.concat([new Uint8Array([1, 2]), Buffer.from([3])]).toString('hex')
+    expect(actual).toEqual('010203')
+  })
+
+  test('should accept other ArrayBufferView items by bytes', () => {
+    const u8 = new Uint8Array([0, 1, 2, 3, 4, 5])
+    const actual = Buffer.concat([new DataView(u8.buffer, 1, 2), new Uint16Array([0x0102])]).toString('hex')
+    expect(actual).toEqual('01020201')
+  })
+
+  test('should throw error with non-ArrayBufferView items', () => {
+    expect(() => Buffer.concat([[1, 2]] as any)).toThrow(/an array of Buffer, Uint8Array or ArrayBufferView/)
   })
 })
 
@@ -773,6 +799,11 @@ describe('Buffer#toString()', () => {
   test('Buffer#toString(\'ucs2\')', () => {
     const actual = Buffer.from('610062006300', 'hex')
     expect(actual.toString('ucs2')).toEqual('abc')
+  })
+
+  test('Buffer#toString(\'ascii\') should unset the highest bit', () => {
+    expect(Buffer.from([0xE9, 0x41]).toString('ascii')).toBe('iA')
+    expect(Buffer.from([0x80, 0xFF, 0x7F]).toString('ascii')).toBe('\x00\x7F\x7F')
   })
 
   test('should throw error with invalid encoding', () => {
@@ -1149,6 +1180,27 @@ describe('Buffer#write()', () => {
     expect(actual.toString('utf8', 1, 4)).toBe('abc')
   })
 
+  test.each([
+    { str: '日', encoding: 'utf8', size: 2, expected: [0, '0000'] },
+    { str: 'a日', encoding: 'utf8', size: 3, expected: [1, '610000'] },
+    { str: 'a😀', encoding: 'utf8', size: 4, expected: [1, '61000000'] },
+    { str: 'a😀', encoding: 'utf8', size: 5, expected: [5, '61f09f9880'] },
+    { str: '\ud800x', encoding: 'utf8', size: 2, expected: [0, '0000'] },
+    { str: 'ab', encoding: 'utf16le', size: 3, expected: [2, '610000'] },
+    { str: 'ab', encoding: 'UCS-2', size: 3, expected: [2, '610000'] },
+    { str: 'abc', encoding: 'latin1', size: 2, expected: [2, '6162'] },
+  ] as const)('should not write partially encoded characters: Buffer.alloc($size).write($str, $encoding)', ({ str, encoding, size, expected }) => {
+    const buf = Buffer.alloc(size)
+    const len = buf.write(str, encoding as any)
+    expect([len, buf.toString('hex')]).toEqual(expected)
+  })
+
+  test('should not write partially encoded characters with length', () => {
+    const buf = Buffer.alloc(10)
+    const len = buf.write('a日', 0, 3)
+    expect([len, buf.toString('hex', 0, 4)]).toEqual([1, '61000000'])
+  })
+
   test('should throw error with invalid val', () => {
     expect.hasAssertions()
     try {
@@ -1266,7 +1318,7 @@ describe('read/write Float16', () => {
     { hex: 'c000', float: -2 },
     { hex: 'fc00', float: -Infinity },
     { hex: '7e00', float: NaN },
-    { hex: 'fe00', float: -parseInt('') }, // prevent -NaN to be transformed to NaN
+    { hex: 'fe00', float: -parseInt('', 10) }, // prevent -NaN to be transformed to NaN
   ])('Buffer.from("$hex", "hex").readFloat16BE() = $float', ({ hex, float }) => {
     expect(Buffer.from(hex, 'hex').readFloat16BE()).toBe(float)
     expect(new Buffer(2).writeFloat16BE(float).toString('hex')).toBe(hex)
@@ -1953,7 +2005,7 @@ describe('Buffer.iterUnpack()', () => {
     expect.hasAssertions()
     try {
       const buf = new Buffer([0])
-      console.log([...Buffer.iterUnpack(buf as any, '!BB')])
+      console.log([...Buffer.iterUnpack(buf, '!BB')])
     } catch (err) {
       expect(err.message).toMatch(/lenRequired/)
     }

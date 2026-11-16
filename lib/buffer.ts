@@ -1,5 +1,5 @@
 import * as _ from 'lodash-es'
-import { type Buffer as NodeBuffer } from 'node:buffer'
+import type { Buffer as NodeBuffer } from 'node:buffer'
 
 const cachedDecoders: Record<string, typeof TextDecoder.prototype> = {}
 const cachedEncoders: Record<string, typeof TextEncoder.prototype> = {}
@@ -44,7 +44,7 @@ const toStringFns = {
   'ucs-2': 'toUcs2String',
   'utf-16le': 'toUcs2String',
   'utf-8': 'toUtf8String',
-  ascii: 'toLatin1String',
+  ascii: 'toAsciiString',
   base64: 'toBase64String',
   base64url: 'toBase64urlString',
   binary: 'toLatin1String',
@@ -253,7 +253,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
 
   /**
    * Allocates a new `Buffer` of `size` bytes. The contents are initialized to `0`. This is equivalent to calling `new Buffer(size)`.
-   * @remarks This method is different from Node.js's `Buffer.allocUnsafe()` method.
+   * @remarks This method is different from Node.js's `Buffer.allocUnsafe()` method. The contents of the returned `Buffer` are always initialized to `0`, while Node.js leaves the underlying memory uninitialized.
    * @param size - The desired length of the new Buffer.
    * @group Static Methods
    * @example
@@ -273,7 +273,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
 
   /**
    * Allocates a new `Buffer` of `size` bytes. The contents are initialized to `0`. This is equivalent to calling `new Buffer(size)`.
-   * @remarks This method is different from Node.js's `Buffer.allocUnsafeSlow()` method.
+   * @remarks This method is different from Node.js's `Buffer.allocUnsafeSlow()` method. The contents of the returned `Buffer` are always initialized to `0`, while Node.js leaves the underlying memory uninitialized.
    * @param size - The desired length of the new Buffer.
    * @group Static Methods
    * @example
@@ -383,7 +383,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * If `totalLength` is not provided, it is calculated from the `Buffer` instances in `list` by adding their lengths.
    *
    * If `totalLength` is provided, it is coerced to an unsigned integer. If the combined length of the `Buffer`s in `list` exceeds `totalLength`, the result is truncated to `totalLength`.
-   * @param list - List of `Buffer` or `Uint8Array` instances to concatenate.
+   * @param list - List of `Buffer`, `Uint8Array` or other `ArrayBufferView` (e.g. `DataView`, `Uint16Array`) instances to concatenate. Each item is concatenated by its underlying bytes.
    * @param totalLength - Total length of the `Buffer` instances in `list` when concatenated.
    * @group Static Methods
    * @example
@@ -404,13 +404,14 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * })()
    * ```
    */
-  static concat (list: Buffer[], totalLength?: number): Buffer {
-    if (!_.isArray(list) || !_.every(list, this.isBuffer)) throw new TypeError('"list" argument must be an array of Buffers')
-    totalLength ??= _.sumBy(list, 'length')
+  static concat (list: ArrayBufferView[], totalLength?: number): Buffer {
+    if (!_.isArray(list) || !_.every(list, item => ArrayBuffer.isView(item))) throw new TypeError('"list" argument must be an array of Buffer, Uint8Array or ArrayBufferView')
+    const views = _.map(list, item => Buffer.fromView(item))
+    totalLength ??= _.sumBy(views, 'length')
     if (totalLength < 0) totalLength = 0
     const buf1 = new Buffer(totalLength)
     let start = 0
-    for (let buf of list) {
+    for (let buf of views) {
       if (start + buf.length > totalLength) buf = buf.subarray(0, totalLength - start)
       buf1.set(buf, start)
       start += buf.length
@@ -725,7 +726,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * Creates a `Buffer` from `view` without copying the underlying memory.
    * @param view - The `ArrayBufferView` to create a `Buffer` from.
    * @param offset - The starting offset within `view`. Default: `0`.
-   * @param length - The number of elements from `view` to copy. Default: `view.length - offset`.
+   * @param length - The number of elements from `view` to include. Default: `view.length - offset`.
    * @group Static Methods
    */
   static fromView (view: ArrayBufferView, offset?: number, length?: number): Buffer
@@ -2368,7 +2369,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * @group Methods
    * @param start - Where the new `Buffer` will start. Default: `0`.
    * @param end - Where the new `Buffer` will end (not inclusive). Default: `buf.length`.
-   * @remarks This method is different from Node.js's `Buffer.slice()` method.
+   * @remarks This method is different from Node.js's `buf.slice()` method. It follows `Uint8Array.prototype.slice()` and returns a copy, while Node.js's `buf.slice()` (deprecated) returns a view that shares memory with the original `Buffer`, the same as `buf.subarray()`.
    * @example
    * ```js
    * ;(async function () {
@@ -2479,8 +2480,9 @@ export class Buffer extends Uint8Array implements INodeBuffer {
   /**
    * Decodes `buf` to a string according to the specified character encoding in `encoding`. `start` and `end` may be passed to decode only a subset of `buf`.
    * @param encoding - The character encoding to use. Default: `'utf8'`.
-   * @param start - The byte offset to start decoding at. Default: `0`.
-   * @param end - The byte offset to stop decoding at (not inclusive). Default: `buf.length`.
+   * @param start - The byte offset to start decoding at. Negative value is treated as an offset from the end of `buf`. Default: `0`.
+   * @param end - The byte offset to stop decoding at (not inclusive). Negative value is treated as an offset from the end of `buf`. Default: `buf.length`.
+   * @remarks This method is different from Node.js's `buf.toString()` method. Negative `start` and `end` are treated as offsets from the end of `buf` (the same as `buf.subarray()`), while Node.js clamps them to `0`. For example, `Buffer.from('hello').toString('utf8', -2)` returns `'lo'` here, but returns `'hello'` in Node.js.
    * @example
    * ```js
    * ;(async function () {
@@ -2572,13 +2574,24 @@ export class Buffer extends Uint8Array implements INodeBuffer {
   }
 
   /**
-   * Decodes `buf` to a string according to the Latin1 character encoding. When decoding a `Buffer` into a string, using this encoding will additionally unset the highest bit of each byte before decoding as `'latin1'`. Generally, there should be no reason to use this encoding, as 'utf8' (or, if the data is known to always be ASCII-only, `'latin1'`) will be a better choice when encoding or decoding ASCII-only text. It is only provided for legacy compatibility.
+   * Decodes `buf` to a string according to the Latin1 character encoding. Each byte is decoded as a single character in the range `U+0000` to `U+00FF`.
    * @param buf - The buffer to decode.
    * @group Static Methods
    */
   static toLatin1String (buf: Buffer): string {
     const arr = []
     for (let i = 0; i < buf.length; i++) arr.push(String.fromCharCode(buf[i]))
+    return arr.join('')
+  }
+
+  /**
+   * Decodes `buf` to a string according to the ASCII character encoding. When decoding a `Buffer` into a string, using this encoding will additionally unset the highest bit of each byte before decoding as `'latin1'`. Generally, there should be no reason to use this encoding, as `'utf8'` (or, if the data is known to always be ASCII-only, `'latin1'`) will be a better choice when encoding or decoding ASCII-only text. It is only provided for legacy compatibility.
+   * @param buf - The buffer to decode.
+   * @group Static Methods
+   */
+  static toAsciiString (buf: Buffer): string {
+    const arr = []
+    for (let i = 0; i < buf.length; i++) arr.push(String.fromCharCode(buf[i] & 0x7F))
     return arr.join('')
   }
 
@@ -2681,8 +2694,15 @@ export class Buffer extends Uint8Array implements INodeBuffer {
     if (!_.isSafeInteger(offset)) throw new TypeError('Invalid type of offset')
     if (!_.isSafeInteger(length)) throw new TypeError('Invalid type of length')
 
+    encoding = toEncodingOrFail(encoding)
     const buf = Buffer.fromString(string, encoding)
     length = Math.min(buf.length, length, this.length - offset)
+    if (length < buf.length) { // avoid writing partially encoded characters
+      const fromStringFn = fromStringFns[encoding as keyof typeof fromStringFns]
+      if (fromStringFn === 'fromUtf8String') {
+        while (length > 0 && (buf[length] & 0xC0) === 0x80) length-- // skip back over continuation bytes
+      } else if (fromStringFn === 'fromUcs2String') length -= length % 2
+    }
     this.set(buf.subarray(0, length), offset)
     return length
   }
@@ -4147,7 +4167,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * })()
    * ```
    */
-  declare reduce: <T=number> (callbackfn: (previousValue: T, currentValue: number, currentIndex: number, array: this) => T, initialValue?: T) => T
+  declare reduce: <T = number> (callbackfn: (previousValue: T, currentValue: number, currentIndex: number, array: this) => T, initialValue?: T) => T
 
   /**
    * Calls the specified callback function for all the elements in an array, in descending order.
@@ -4170,7 +4190,7 @@ export class Buffer extends Uint8Array implements INodeBuffer {
    * })()
    * ```
    */
-  declare reduceRight: <T=number> (callbackfn: (previousValue: T, currentValue: number, currentIndex: number, array: this) => T, initialValue?: T) => T
+  declare reduceRight: <T = number> (callbackfn: (previousValue: T, currentValue: number, currentIndex: number, array: this) => T, initialValue?: T) => T
 
   /**
    * Alias of {@link DataView.getBigInt64}.

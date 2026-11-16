@@ -135,8 +135,8 @@ out
 *.nojekyll
 *.test.ts
 *.xml
-/.eslint*
-/*.config.js
+/eslint.config.*
+/*.config.*
 /benchmark
 /build-utils
 /dist/assets
@@ -144,9 +144,9 @@ out
 /static
 /tsconfig.json
 /tsdoc.json
-/tsup.config.ts
 /typedoc.json
 context7.json
+llms.txt
 
 # Allowlist files
 !/README.md
